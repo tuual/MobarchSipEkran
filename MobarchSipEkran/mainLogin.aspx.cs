@@ -6,13 +6,14 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using MobarchSipEkran.Class;
 
 namespace MobarchSipEkran
 {
 	public partial class mainLogin : System.Web.UI.Page
 	{
-
-		protected void Page_Load(object sender, EventArgs e)
+        Alert alert = new Alert();
+        protected void Page_Load(object sender, EventArgs e)
 		{
 			if (!IsPostBack)
 			{
@@ -33,7 +34,7 @@ namespace MobarchSipEkran
 
             if (string.IsNullOrWhiteSpace(vkn) || string.IsNullOrWhiteSpace(kadi) || string.IsNullOrWhiteSpace(sifre))
             {
-                Alert("Lütfen tüm alanları doldurunuz.");
+                alert.AlertMsg("Lütfen tüm alanları doldurunuz.",this);
                 return;
             }
 
@@ -48,7 +49,7 @@ namespace MobarchSipEkran
 
                 if (userRow == null)
                 {
-                    Alert("Bilgiler hatalı. Lütfen tekrar kontrol edin.");
+                    alert.AlertMsg("Bilgiler hatalı. Lütfen tekrar kontrol edin.",this);
                     return;
                 }
 
@@ -58,7 +59,7 @@ namespace MobarchSipEkran
 
                 if (string.IsNullOrWhiteSpace(sistemCariKod) || string.IsNullOrWhiteSpace(altcarikod))
                 {
-                    Alert("Kullanıcı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.");
+                    alert.AlertMsg("Kullanıcı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.",this);
                     return;
                 }
 
@@ -69,7 +70,7 @@ namespace MobarchSipEkran
 
                 if (connRow == null)
                 {
-                    Alert("Sistem bağlantı bilgisi bulunamadı. (tWebBilgiler)");
+                    alert.AlertMsg("Sistem bağlantı bilgisi bulunamadı. (tWebBilgiler)",this);
                     return;
                 }
 
@@ -80,7 +81,7 @@ namespace MobarchSipEkran
 
                 if (string.IsNullOrWhiteSpace(ds) || string.IsNullOrWhiteSpace(db))
                 {
-                    Alert("Sistem bağlantı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.");
+                    alert.AlertMsg("Sistem bağlantı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.",this);
                     return;
                 }
 
@@ -103,9 +104,8 @@ namespace MobarchSipEkran
             }
             catch (Exception ex)
             {
-                Alert("Giriş Sırasında Bir hata ile karşılaşıldı " + '\n' + ex.ToString());
+                alert.AlertMsg("Giriş Sırasında Bir hata ile karşılaşıldı " + '\n' + ex.ToString(),this);
             }
-
 
             // ClientScript.RegisterStartupScript(this.GetType(), "alert", "alert('Giriş Başarılı!')",true);
         }
@@ -133,17 +133,17 @@ namespace MobarchSipEkran
             //DbHelper.Sessions session = new DbHelper.Sessions();
             //session.Connstr = "Data Source=DESKTOP-ABCD123;Initial Catalog=MyDatabase;
 
-            DbHelper.Sessions session = new DbHelper.Sessions();
-            session.Connstr = connstr;
-            session.Sistemcarikod = sistemcarikod;
-            session.Altcarikod = altcarikod;
-            session.Vkn = vkn;  
-            session.Kadi = kadi;
+            var sessionobj = new DbHelper.Sessions();
+            sessionobj.Connstr = connstr;
+            sessionobj.Sistemcarikod = sistemcarikod;
+            sessionobj.Altcarikod = altcarikod;
+            sessionobj.Vkn = vkn;  
+            sessionobj.Kadi = kadi;
+
+
+            Session["MobarchUser"] = sessionobj;
         }
 
-        private void Alert(string msg)
-        {
-            ClientScript.RegisterStartupScript(this.GetType(), "alert", "alert('" + msg.Replace("'", "\\'") + "')", true);
-        }
+        
     }
 }

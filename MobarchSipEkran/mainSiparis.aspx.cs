@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using Microsoft.Ajax.Utilities;
+using MobarchSipEkran.Class;
+using MobarchSipEkran.DbHelper;
 
 namespace MobarchSipEkran
 {
@@ -12,7 +16,7 @@ namespace MobarchSipEkran
     {
         private readonly CultureInfo tr = new CultureInfo("tr-TR");
 
-
+        Alert alert = new Alert();
         // kdv hesaplama gpt den aldım
         private static decimal NormalizeKdv(object val, CultureInfo culture)
         {
@@ -30,16 +34,32 @@ namespace MobarchSipEkran
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            var conn = Db.ResolveConnStr();
+            if (string.IsNullOrEmpty(conn))
+            {
+                ClientScript.RegisterStartupScript(GetType(), "yok", "alert('Bağlantı bulunamadı.');", true);
+                Response.Redirect("/mainLogin.aspx");
+            }
             if (!IsPostBack)
             {
+                try
+                {
+                    txtBelgeNo.Text = GetNextFatirsNoFromSeri();
+                }
+                catch (Exception ex)
+                {
+                    alert.AlertMsg("Belge numarası üretilemedi: " + ex.Message, this);
+                    txtBelgeNo.Text = "";
+                }
                 txtTarih.Text = DateTime.Now.ToString("yyyy-MM-dd");
                 BindGrid();
                 RecalcTotals();
                 txtGenelToplam.Enabled = false;
                 txtFiyat.Enabled = false;
                 txtStokAdi.Enabled = false;
-
-                
+                txtBelgeNo.Enabled = false;
+                CariBilgileri();
+             
             }
         }
 
@@ -74,11 +94,21 @@ namespace MobarchSipEkran
         // --- Stok Seç modali event’i ---------------------------------------
         protected void stokSecModal_StokSecildi(object sender, StokSec.StokSecEventArgs e)
         {
-            txtStokKodu.Text = e.StokKodu; 
-            txtStokAdi.Text = e.StokAdi; 
-            var row = Db.ExecuteRow("SELECT SATIS_FIAT1 FROM tStokMaster WHERE STOK_KODU=@K", new SqlParameter("@K", e.StokKodu)); 
-            if (row != null && row["SATIS_FIAT1"] != DBNull.Value) txtFiyat.Text = Convert.ToDecimal(row["SATIS_FIAT1"]).ToString("N2"); 
-            else txtFiyat.Text = "0,00";
+            txtStokKodu.Text = e.StokKodu;
+            txtStokAdi.Text = e.StokAdi;
+
+            try
+            {
+                var row = Db.ExecuteRow("SELECT SATIS_FIAT1 FROM tStokMaster WHERE STOK_KODU=@K", new SqlParameter("@K", e.StokKodu));
+                if (row != null && row["SATIS_FIAT1"] != DBNull.Value) txtFiyat.Text = Convert.ToDecimal(row["SATIS_FIAT1"]).ToString("N2");
+                else txtFiyat.Text = "0,00";
+
+            }
+            catch (Exception ex)
+            {
+
+                ScriptManager.RegisterStartupScript(this, GetType(), "hata", "alert('Hata oluştu: " + ex.Message.Replace("'", "\\'") + "');", true);
+            }
 
         }
 
@@ -126,8 +156,8 @@ namespace MobarchSipEkran
             }
 
             // hesaplamalar
-            decimal net = Math.Round(miktar * fiyat, 1);
-            decimal kdv = Math.Round(net * kdvOran, 1);
+            decimal net = Math.Round(miktar * fiyat, 2);
+            decimal kdv = Math.Round(net * kdvOran, 2);
             decimal dahil = net + kdv;
 
             // satir ekleme
@@ -149,14 +179,15 @@ namespace MobarchSipEkran
             {
                 dt.Rows.Add(kod, stokAdi, miktar, fiyat, net, kdvOran, kdv, dahil);
             }
-
+            txtStokAdi.Text = "";
+            txtMiktar.Text = "";
+            txtStokKodu.Text = "";
+            txtFiyat.Text = "";
             Stoklar = dt;
             BindGrid();
-            RecalcTotals();
+            RefreshTotalsPanel();
 
-            
-            Response.Redirect(Request.RawUrl, false);
-            Context.ApplicationInstance.CompleteRequest();
+         
         }
 
         protected void gvStoklar_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -170,13 +201,16 @@ namespace MobarchSipEkran
             {
                 var dt = Stoklar;
                 var dr = dt.AsEnumerable().FirstOrDefault(r => r.Field<string>("StokKodu") == kod);
-                if (dr != null) dr.Delete();
+                if (dr != null)
+                {
+                    dt.Rows.Remove(dr);   // ÖNEMLİ: dr.Delete() değil
+                }
+
                 Stoklar = dt;
                 BindGrid();
-                RecalcTotals();
+                RefreshTotalsPanel();     // RecalcTotals + CariBilgileri
             }
         }
-
         protected void RowMiktar_TextChanged(object sender, EventArgs e)
         {
             var txt = (TextBox)sender;
@@ -192,8 +226,8 @@ namespace MobarchSipEkran
             decimal fiyat = dr.Field<decimal>("Fiyat");
             decimal kdvOran = dr.Field<decimal?>("KdvOran") ?? 0m;
 
-            decimal net = Math.Round(yeniMiktar * fiyat, 2);
-            decimal kdv = Math.Round(net * kdvOran, 2);
+            decimal net = Math.Round(yeniMiktar * fiyat, 6);
+            decimal kdv = Math.Round(net * kdvOran, 6);
             decimal dahil = net + kdv;
 
             dr["Miktar"] = yeniMiktar;
@@ -203,7 +237,7 @@ namespace MobarchSipEkran
 
             Stoklar = dt;
             BindGrid();
-            RecalcTotals();
+            RefreshTotalsPanel();
         }
 
         // --- TOPLAM HESAPLAMA
@@ -230,7 +264,7 @@ namespace MobarchSipEkran
             txtGenelToplam.Text = (araToplam + kdvAfter).ToString("N2", tr);
         }
 
-        
+
         protected void btnKaydet_Click(object sender, EventArgs e)
         {
         }
@@ -243,5 +277,106 @@ namespace MobarchSipEkran
                 gvStoklar.HeaderRow.TableSection = TableRowSection.TableHeader;
             }
         }
+
+        protected void txtIskonto_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void RefreshTotalsPanel()
+        {
+            RecalcTotals();
+            CariBilgileri();
+            upTotals.Update();
+        }
+
+
+        private void CariBilgileri()
+        {
+            var info = Services.CariService.GetFromSession();
+            if (info == null)
+            {
+                lblCariBakiye.Text = "0,00";
+                lblRiskLimiti.Text = "0,00";
+                lblKalanLimit.Text = "0,00";
+                lblKalanLimit.ForeColor = Color.Black;
+                alert.AlertMsg("Cari bakiye bilgileri alınamadı", this);
+                return;
+            }
+
+            // DB'den gelen ham değerler
+            lblCariBakiye.Text = info.Bakiye.ToString("N2", tr);
+            lblRiskLimiti.Text = info.RiskLimiti.ToString("N2", tr);
+
+            // Carinin kullanılabilir limiti (CariBakiye.Kullanilabilir)
+            decimal kullanilabilir = info.Kullanilabilir;
+
+            // Şu anki siparişin genel toplamı
+            decimal siparisGenelToplam = ParseDec(txtGenelToplam.Text);
+
+            // Sipariş sonrası kalan limit
+            decimal kalanLimit = kullanilabilir - siparisGenelToplam;
+
+            lblKalanLimit.Text = kalanLimit.ToString("N2", tr);
+            lblKalanLimit.ForeColor = kalanLimit < 0 ? Color.Red : Color.Black;
+        }
+
+        private string GetNextFatirsNoFromSeri()
+        {
+            // 1) Önce IMPSERI'den seri prefix (ilk 3 hane) al
+            var seriRow = Db.ExecuteRow(
+                "SELECT IMPSERI FROM dbo.tMainEvrakSerileri WHERE KULID = 0");
+
+            if (seriRow == null || seriRow["IMPSERI"] == DBNull.Value)
+                throw new Exception("IMPSERI bulunamadı (tMainEvrakSerileri.KULID=0).");
+
+            string imps = Convert.ToString(seriRow["IMPSERI"]).Trim();
+            if (string.IsNullOrEmpty(imps))
+                throw new Exception("IMPSERI boş geldi.");
+
+            // İlk 3 hane prefix
+            string prefix = imps.Length >= 3 ? imps.Substring(0, 3) : imps.PadRight(3, '0');
+
+            // 2) Bu seri ile başlayan en büyük FATIRS_NO'yu çek
+            const string sql = @"
+        SELECT MAX(FATIRS_NO) AS SONNO
+        FROM dbo.tFatura
+        WHERE FATIRS_NO LIKE @P + '%';
+    ";
+
+            var row = Db.ExecuteRow(sql, new SqlParameter("@P", prefix));
+
+            string last = (row == null || row["SONNO"] == DBNull.Value)
+                ? null
+                : Convert.ToString(row["SONNO"]);
+
+            int totalLen = 15;                       
+            int numericLen = totalLen - prefix.Length;
+
+            if (numericLen <= 0)
+                throw new Exception("Belge numarası uzunluğu hatalı (prefix çok uzun).");
+
+            if (string.IsNullOrWhiteSpace(last))
+            {
+                string firstNumber = 1.ToString().PadLeft(numericLen, '0');
+                return prefix + firstNumber;
+            }
+
+            if (!last.StartsWith(prefix))
+                throw new Exception("Son FATIRS_NO beklenen seri ile başlamıyor.");
+
+            string numericPart = last.Substring(prefix.Length);
+            if (!numericPart.All(char.IsDigit))
+                throw new Exception("FATIRS_NO sayısal olmayan karakter içeriyor.");
+
+            long n = long.Parse(numericPart);
+            n++; 
+
+            string nextNumeric = n.ToString().PadLeft(numericPart.Length, '0');
+
+            // 5) Yeni belge numarası
+            return prefix + nextNumeric;
+        }
+
     }
 }

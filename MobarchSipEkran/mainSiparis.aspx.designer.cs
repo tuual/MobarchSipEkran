@@ -15,13 +15,22 @@ namespace MobarchSipEkran
     {
 
         /// <summary>
-        /// stokSecModal control.
+        /// hfGenelToplam control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::MobarchSipEkran.StokSec stokSecModal;
+        protected global::System.Web.UI.WebControls.HiddenField hfGenelToplam;
+
+        /// <summary>
+        /// hfKullanilabilirLimit control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfKullanilabilirLimit;
 
         /// <summary>
         /// hfEditIndex control.
@@ -31,6 +40,15 @@ namespace MobarchSipEkran
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.HiddenField hfEditIndex;
+
+        /// <summary>
+        /// stokSecModal control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::MobarchSipEkran.StokSec stokSecModal;
 
         /// <summary>
         /// txtBelgeNo control.
@@ -49,15 +67,6 @@ namespace MobarchSipEkran
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtTarih;
-
-        /// <summary>
-        /// txtTeslimTarihi control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtTeslimTarihi;
 
         /// <summary>
         /// TextBox1 control.
@@ -114,22 +123,13 @@ namespace MobarchSipEkran
         protected global::System.Web.UI.WebControls.Button btnEkle;
 
         /// <summary>
-        /// upGrid control.
+        /// upTotals control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.UpdatePanel upGrid;
-
-        /// <summary>
-        /// gvStoklar control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvStoklar;
+        protected global::System.Web.UI.UpdatePanel upTotals;
 
         /// <summary>
         /// lblCariBakiye control.
@@ -150,22 +150,13 @@ namespace MobarchSipEkran
         protected global::System.Web.UI.WebControls.Label lblRiskLimiti;
 
         /// <summary>
-        /// lblKullanilabilir control.
+        /// lblKalanLimit control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblKullanilabilir;
-
-        /// <summary>
-        /// upTotals control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.UpdatePanel upTotals;
+        protected global::System.Web.UI.WebControls.Label lblKalanLimit;
 
         /// <summary>
         /// txtBrutTutar control.
@@ -211,6 +202,24 @@ namespace MobarchSipEkran
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtGenelToplam;
+
+        /// <summary>
+        /// upGrid control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.UpdatePanel upGrid;
+
+        /// <summary>
+        /// gvStoklar control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView gvStoklar;
 
         /// <summary>
         /// btnKaydet control.

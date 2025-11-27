@@ -1,4 +1,4 @@
-﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="MobarchSipEkran.SiteMaster" %>
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="MobarchSipEkran.SiteMaster"   %>
 <%@ Register Src="~/StokSec.ascx" TagPrefix="uc" TagName="StokSec" %>
 
 <!DOCTYPE html>
@@ -69,7 +69,7 @@
                 <%--Site Scripts--%>
             </Scripts>
         </asp:ScriptManager>
-<nav class="navbar navbar-expand-lg shadow-sm" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
+<nav runat="server" id="NavBar" class="navbar navbar-expand-lg shadow-sm" style="background: linear-gradient(90deg, #1f1c2c, #928dab);">
   <div class="container-fluid">
     <!-- Logo -->
     <a class="navbar-brand text-white fw-bold fs-4" href="#">
@@ -96,7 +96,7 @@
           <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
             <li>
               <button class="dropdown-item btn btn-outline-primary w-100 mb-2 fw-semibold">
-                <i class="bi bi-cart-plus me-2"></i>Sipariş Oluşturma
+                <i class="bi bi-cart-plus me-2" ></i>Sipariş Oluşturma
               </button>
             </li>
             <li>

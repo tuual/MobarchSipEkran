@@ -5,6 +5,9 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
+using System.Web.UI;
+using Microsoft.Ajax.Utilities;
+using MobarchSipEkran.Class;
 
 namespace MobarchSipEkran
 {
@@ -14,11 +17,15 @@ namespace MobarchSipEkran
         {
             var ctx = System.Web.HttpContext.Current;
             var fromSession = ctx?.Session?["ConnStr"] as string;
+
             if (!string.IsNullOrWhiteSpace(fromSession))
                 return fromSession;
-
-            return ConfigurationManager.ConnectionStrings["DefaultConn"]?.ConnectionString
-                   ?? throw new InvalidOperationException("Bağlantı dizesi bulunamadı.");
+          
+            
+                return ConfigurationManager.ConnectionStrings["DefaultConn"]?.ConnectionString
+                     ?? throw new InvalidOperationException("Bağlantı dizesi bulunamadı.");
+            
+            
         }
 
         public static object ExecuteScalar(string sql, params SqlParameter[] parameters)
