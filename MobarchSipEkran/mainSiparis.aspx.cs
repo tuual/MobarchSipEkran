@@ -15,6 +15,7 @@ namespace MobarchSipEkran
     public partial class mainSiparis : System.Web.UI.Page
     {
         private readonly CultureInfo tr = new CultureInfo("tr-TR");
+        private const string SIPARIS_KEY = "SiparisGuid";
 
         Alert alert = new Alert();
         // kdv hesaplama gpt den aldım
@@ -35,13 +36,15 @@ namespace MobarchSipEkran
         protected void Page_Load(object sender, EventArgs e)
         {
             var conn = Db.ResolveConnStr();
-            if (string.IsNullOrEmpty(conn))
+            if (Session["MobarchUser"] == null)
             {
-                ClientScript.RegisterStartupScript(GetType(), "yok", "alert('Bağlantı bulunamadı.');", true);
                 Response.Redirect("/mainLogin.aspx");
+                return;
             }
+
             if (!IsPostBack)
             {
+                TemizleDetay();
                 try
                 {
                     txtBelgeNo.Text = GetNextFatirsNoFromSeri();
@@ -54,14 +57,16 @@ namespace MobarchSipEkran
                 txtTarih.Text = DateTime.Now.ToString("yyyy-MM-dd");
                 BindGrid();
                 RecalcTotals();
+                CariBilgileri();    
                 txtGenelToplam.Enabled = false;
                 txtFiyat.Enabled = false;
                 txtStokAdi.Enabled = false;
                 txtBelgeNo.Enabled = false;
-                CariBilgileri();
              
             }
+
         }
+
 
         private DataTable Stoklar
         {
@@ -174,20 +179,20 @@ namespace MobarchSipEkran
                 mevcut["KdvOran"] = kdvOran;
                 mevcut["KdvTutar"] = kdv;
                 mevcut["KdvDahilTutar"] = dahil;
+               
             }
             else
             {
                 dt.Rows.Add(kod, stokAdi, miktar, fiyat, net, kdvOran, kdv, dahil);
+              
             }
-            txtStokAdi.Text = "";
-            txtMiktar.Text = "";
-            txtStokKodu.Text = "";
-            txtFiyat.Text = "";
+
             Stoklar = dt;
             BindGrid();
             RefreshTotalsPanel();
+            TemizleDetay();
 
-         
+
         }
 
         protected void gvStoklar_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -304,16 +309,18 @@ namespace MobarchSipEkran
                 return;
             }
 
-            // DB'den gelen ham değerler
             lblCariBakiye.Text = info.Bakiye.ToString("N2", tr);
             lblRiskLimiti.Text = info.RiskLimiti.ToString("N2", tr);
 
+            
+
             // Carinin kullanılabilir limiti (CariBakiye.Kullanilabilir)
-            decimal kullanilabilir = info.Kullanilabilir;
+            decimal kullanilabilir = Math.Max(0,info.RiskLimiti - info.Bakiye);
 
             // Şu anki siparişin genel toplamı
             decimal siparisGenelToplam = ParseDec(txtGenelToplam.Text);
-
+            
+           
             // Sipariş sonrası kalan limit
             decimal kalanLimit = kullanilabilir - siparisGenelToplam;
 
@@ -376,6 +383,14 @@ namespace MobarchSipEkran
 
             // 5) Yeni belge numarası
             return prefix + nextNumeric;
+        }
+
+        private void TemizleDetay()
+        {
+            txtStokAdi.Text = "";
+            txtMiktar.Text = "";
+            txtStokKodu.Text = "";
+            txtFiyat.Text = "";
         }
 
     }

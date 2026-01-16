@@ -12,7 +12,10 @@ namespace MobarchSipEkran.DbHelper
             public decimal Bakiye { get; set; }        // CM_BORCT - CM_ALACT
             public decimal RiskLimiti { get; set; }    // CARISK
 
+
+            
             public decimal Kullanilabilir => RiskLimiti - Math.Max(0m, Bakiye);
+            
         
     }
 }

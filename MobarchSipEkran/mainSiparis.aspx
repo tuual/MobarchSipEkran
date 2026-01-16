@@ -167,7 +167,7 @@
                         <div class="col-md-4">
                             <label class="form-label label-xs text-muted">Stok Kodu</label>
                             <div class="input-group input-group-sm">
-                                <asp:TextBox ID="txtStokKodu" runat="server" CssClass="form-control" />
+                                <asp:TextBox ID="txtStokKodu" runat="server" CssClass="form-control"  EnableViewState="false"/>
                                 <button type="button" class="btn btn-outline-light border-0" data-bs-toggle="modal" data-bs-target="#stokModal" title="Stok Seç">
                                     <i class="bi bi-search"></i>
                                 </button>
@@ -176,21 +176,21 @@
 
                         <div class="col-md-4">
                             <label class="form-label label-xs text-muted">Stok Adı</label>
-                            <asp:TextBox ID="txtStokAdi" runat="server" CssClass="form-control form-control-sm" />
+                            <asp:TextBox ID="txtStokAdi" runat="server" CssClass="form-control form-control-sm" EnableViewState="false" />
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label label-xs text-muted">Miktar</label>
-                            <asp:TextBox ID="txtMiktar" runat="server" CssClass="form-control form-control-sm number" />
+                            <asp:TextBox ID="txtMiktar" runat="server" CssClass="form-control form-control-sm number" EnableViewState="false" />
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label label-xs text-muted">Fiyat</label>
-                            <asp:TextBox ID="txtFiyat" runat="server" CssClass="form-control form-control-sm number" />
+                            <asp:TextBox ID="txtFiyat" runat="server" CssClass="form-control form-control-sm number" EnableViewState="false"     />
                         </div>
 
                         <div class="col-md-2">
-                            <asp:Button ID="btnEkle" runat="server" Text="➕ Ekle"
+                            <asp:Button ID="btnEkle" runat="server" Text="Ekle"
                                 CssClass="btn btn-success btn-sm w-100 mt-2 mt-md-4"
                                 UseSubmitBehavior="false" OnClick="btnEkle_Click" />
                         </div>
