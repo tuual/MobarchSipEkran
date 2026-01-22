@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
+using System.Web.SessionState;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using MobarchSipEkran.Class;
@@ -34,7 +35,7 @@ namespace MobarchSipEkran
 
             if (string.IsNullOrWhiteSpace(vkn) || string.IsNullOrWhiteSpace(kadi) || string.IsNullOrWhiteSpace(sifre))
             {
-                alert.AlertMsg("Lütfen tüm alanları doldurunuz.",this);
+                alert.AlertMsg("Lütfen tüm alanları doldurunuz.",this,"loginUyari");
                 return;
             }
 
@@ -49,7 +50,7 @@ namespace MobarchSipEkran
 
                 if (userRow == null)
                 {
-                    alert.AlertMsg("Bilgiler hatalı. Lütfen tekrar kontrol edin.",this);
+                    alert.AlertMsg("Bilgiler hatalı. Lütfen tekrar kontrol edin.",this,"loginUyari1");
                     return;
                 }
 
@@ -59,7 +60,7 @@ namespace MobarchSipEkran
 
                 if (string.IsNullOrWhiteSpace(sistemCariKod) || string.IsNullOrWhiteSpace(altcarikod))
                 {
-                    alert.AlertMsg("Kullanıcı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.",this);
+                    alert.AlertMsg("Kullanıcı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.",this, "loginUyari2");
                     return;
                 }
 
@@ -70,7 +71,7 @@ namespace MobarchSipEkran
 
                 if (connRow == null)
                 {
-                    alert.AlertMsg("Sistem bağlantı bilgisi bulunamadı. (tWebBilgiler)",this);
+                    alert.AlertMsg("Sistem bağlantı bilgisi bulunamadı. (tWebBilgiler)",this, "loginUyari3");
                     return;
                 }
 
@@ -81,7 +82,7 @@ namespace MobarchSipEkran
 
                 if (string.IsNullOrWhiteSpace(ds) || string.IsNullOrWhiteSpace(db))
                 {
-                    alert.AlertMsg("Sistem bağlantı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.",this);
+                    alert.AlertMsg("Sistem bağlantı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.",this, "loginUyari4");
                     return;
                 }
 
@@ -96,15 +97,16 @@ namespace MobarchSipEkran
                 Session["SISTEMCARIKOD"] = sistemCariKod;
                 Session["ALTCARIKOD"] = altcarikod;
                 Session["VKN"] = vkn;
-                Session["Kadi"] = kadi;        
-                    
+                Session["Kadi"] = kadi;
+                var sid = System.Web.HttpContext.Current.Session.SessionID;
+                Session.Add("SID", sid); // session alma yazma
                 ClassDoldurma(customerConnStr, sistemCariKod, altcarikod, vkn, kadi);
                 Response.Redirect("~/mainSiparis.aspx", false);
                 Context.ApplicationInstance.CompleteRequest();
             }
             catch (Exception ex)
             {
-                alert.AlertMsg("Giriş Sırasında Bir hata ile karşılaşıldı " + '\n' + ex.ToString(),this);
+                alert.AlertMsg("Giriş Sırasında Bir hata ile karşılaşıldı " + '\n' + ex.ToString(),this, "loginUyari6");
             }
 
             // ClientScript.RegisterStartupScript(this.GetType(), "alert", "alert('Giriş Başarılı!')",true);

@@ -15,7 +15,6 @@ namespace MobarchSipEkran
     public partial class mainSiparis : System.Web.UI.Page
     {
         private readonly CultureInfo tr = new CultureInfo("tr-TR");
-        private const string SIPARIS_KEY = "SiparisGuid";
 
         Alert alert = new Alert();
         // kdv hesaplama gpt den aldım
@@ -36,58 +35,66 @@ namespace MobarchSipEkran
         protected void Page_Load(object sender, EventArgs e)
         {
             var conn = Db.ResolveConnStr();
-            if (Session["MobarchUser"] == null)
+            if (string.IsNullOrEmpty(conn))
             {
+                ClientScript.RegisterStartupScript(GetType(), "yok", "alert('Bağlantı bulunamadı.');", true);
                 Response.Redirect("/mainLogin.aspx");
-                return;
             }
-
             if (!IsPostBack)
             {
-                TemizleDetay();
+                txtGenelToplam.Enabled = false;
+                txtFiyat.Enabled = false;
+                txtStokAdi.Enabled = false;
+                txtBelgeNo.Enabled = false;
+                txtStokKodu.Enabled = false;
+
                 try
                 {
                     txtBelgeNo.Text = GetNextFatirsNoFromSeri();
                 }
                 catch (Exception ex)
                 {
-                    alert.AlertMsg("Belge numarası üretilemedi: " + ex.Message, this);
+                    alert.AlertMsg("Belge numarası üretilemedi: " + ex.Message, this,"belgeNoUyari");
                     txtBelgeNo.Text = "";
                 }
                 txtTarih.Text = DateTime.Now.ToString("yyyy-MM-dd");
                 BindGrid();
                 RecalcTotals();
-                CariBilgileri();    
-                txtGenelToplam.Enabled = false;
-                txtFiyat.Enabled = false;
-                txtStokAdi.Enabled = false;
-                txtBelgeNo.Enabled = false;
+              
+                CariBilgileri();
+
+
              
             }
 
         }
 
-
+        private DataTable CreateStoklarTable()
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("StokKodu");
+            dt.Columns.Add("StokAdi");
+            dt.Columns.Add("Miktar", typeof(decimal));
+            dt.Columns.Add("Fiyat", typeof(decimal));
+            dt.Columns.Add("Tutar", typeof(decimal));
+            dt.Columns.Add("KdvOran", typeof(decimal));
+            dt.Columns.Add("KdvTutar", typeof(decimal));
+            dt.Columns.Add("KdvDahilTutar", typeof(decimal));
+            return dt;
+        }
         private DataTable Stoklar
         {
             get
             {
                 if (Session["Stoklar"] == null)
-                {
-                    var dt = new DataTable();
-                    dt.Columns.Add("StokKodu");
-                    dt.Columns.Add("StokAdi");
-                    dt.Columns.Add("Miktar", typeof(decimal));
-                    dt.Columns.Add("Fiyat", typeof(decimal));
-                    dt.Columns.Add("Tutar", typeof(decimal));           // net
-                    dt.Columns.Add("KdvOran", typeof(decimal));         // 0.01
-                    dt.Columns.Add("KdvTutar", typeof(decimal));
-                    dt.Columns.Add("KdvDahilTutar", typeof(decimal));   // net + kdv
-                    Session["Stoklar"] = dt;
-                }
+                    Session["Stoklar"] = CreateStoklarTable();
+
                 return (DataTable)Session["Stoklar"];
             }
-            set { Session["Stoklar"] = value; }
+            set
+            {
+                Session["Stoklar"] = value;
+            }
         }
 
         private void BindGrid()
@@ -118,12 +125,12 @@ namespace MobarchSipEkran
         }
 
         // --- EKLE / GÜNCELLE ------------------------------------------------
-        protected void btnEkle_Click(object sender, EventArgs e)
+        protected void  btnEkle_Click(object sender, EventArgs e)
         {
-            string kod = (txtStokKodu.Text ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(kod))
+            var kod = txtStokKodu.Text.Trim();
+            if (string.IsNullOrWhiteSpace(txtStokKodu.Text))
             {
-                ClientScript.RegisterStartupScript(GetType(), "uyari", "alert('Stok kodu zorunlu.');", true);
+                ScriptManager.RegisterStartupScript(this, typeof(Page), "uyariStok", "alert('Stok Seçimi Yapılmalıdır.')", true);
                 return;
             }
 
@@ -131,21 +138,23 @@ namespace MobarchSipEkran
             decimal fiyat = ParseDec(txtFiyat.Text);
             string stokAdi = (txtStokAdi.Text ?? "").Trim();
 
-            // Eksikler varsa DB’den tamamla
             decimal kdvOran = 0m;
+
             if (string.IsNullOrWhiteSpace(stokAdi) || fiyat <= 0m)
             {
                 var row = Db.ExecuteRow(
                     "SELECT STOK_ADI, SATIS_FIAT1, KDV_ORANI FROM tStokMaster WHERE STOK_KODU=@K",
-                    new SqlParameter("@K", kod));
+                    new SqlParameter("@K", txtStokKodu.Text));
 
                 if (row == null)
                 {
                     ClientScript.RegisterStartupScript(GetType(), "yok", "alert('Stok bulunamadı.');", true);
                     return;
                 }
+
                 if (string.IsNullOrWhiteSpace(stokAdi))
                     stokAdi = Convert.ToString(row["STOK_ADI"]);
+
                 if (fiyat <= 0m && row["SATIS_FIAT1"] != DBNull.Value)
                     fiyat = Convert.ToDecimal(row["SATIS_FIAT1"], tr);
 
@@ -153,23 +162,25 @@ namespace MobarchSipEkran
             }
             else
             {
-                // Kdv çekme
                 var row = Db.ExecuteRow(
                     "SELECT KDV_ORANI FROM tStokMaster WHERE STOK_KODU=@K",
                     new SqlParameter("@K", kod));
+
                 kdvOran = NormalizeKdv(row?["KDV_ORANI"], tr);
             }
 
-            // hesaplamalar
             decimal net = Math.Round(miktar * fiyat, 2);
             decimal kdv = Math.Round(net * kdvOran, 2);
             decimal dahil = net + kdv;
 
-            // satir ekleme
             var dt = Stoklar;
+
             var mevcut = dt.AsEnumerable()
-                           .FirstOrDefault(r => string.Equals(r.Field<string>("StokKodu"),
-                                                              kod, StringComparison.OrdinalIgnoreCase));
+                .FirstOrDefault(r =>
+                    string.Equals(r.Field<string>("StokKodu"),
+                                  kod,
+                                  StringComparison.OrdinalIgnoreCase));
+
             if (mevcut != null)
             {
                 mevcut["StokAdi"] = stokAdi;
@@ -179,21 +190,41 @@ namespace MobarchSipEkran
                 mevcut["KdvOran"] = kdvOran;
                 mevcut["KdvTutar"] = kdv;
                 mevcut["KdvDahilTutar"] = dahil;
-               
             }
             else
             {
-                dt.Rows.Add(kod, stokAdi, miktar, fiyat, net, kdvOran, kdv, dahil);
+                DataRow yeni = dt.NewRow();
+                yeni["StokKodu"] = kod;
+                yeni["StokAdi"] = stokAdi;
+                yeni["Miktar"] = miktar;
+                yeni["Fiyat"] = fiyat;
+                yeni["Tutar"] = net;
+                yeni["KdvOran"] = kdvOran;
+                yeni["KdvTutar"] = kdv;
+                yeni["KdvDahilTutar"] = dahil;
+                dt.Rows.Add(yeni);
+                Session["Stoklar"] = yeni;
+
+                gvStoklar.DataSource = dt;
+                gvStoklar.DataBind();
               
+
             }
 
             Stoklar = dt;
             BindGrid();
             RefreshTotalsPanel();
-            TemizleDetay();
 
+            //js kodu -- textboxları silme yeri
+            ScriptManager.RegisterStartupScript(this, typeof(Page), "UpdateMsg", "" +
+                "document.getElementById('txtStokKodu').value = '';" +
+                "document.getElementById('txtStokAdi').value = '';" +
+                "document.getElementById('txtFiyat').value = '';" +
+                "document.getElementById('txtMiktar').value = '';", true);      
+        
 
         }
+
 
         protected void gvStoklar_RowCommand(object sender, GridViewCommandEventArgs e)
         {
@@ -208,12 +239,12 @@ namespace MobarchSipEkran
                 var dr = dt.AsEnumerable().FirstOrDefault(r => r.Field<string>("StokKodu") == kod);
                 if (dr != null)
                 {
-                    dt.Rows.Remove(dr);   // ÖNEMLİ: dr.Delete() değil
+                    dt.Rows.Remove(dr);   
                 }
 
                 Stoklar = dt;
                 BindGrid();
-                RefreshTotalsPanel();     // RecalcTotals + CariBilgileri
+                RefreshTotalsPanel();    
             }
         }
         protected void RowMiktar_TextChanged(object sender, EventArgs e)
@@ -305,7 +336,7 @@ namespace MobarchSipEkran
                 lblRiskLimiti.Text = "0,00";
                 lblKalanLimit.Text = "0,00";
                 lblKalanLimit.ForeColor = Color.Black;
-                alert.AlertMsg("Cari bakiye bilgileri alınamadı", this);
+                alert.AlertMsg("Cari bakiye bilgileri alınamadı", Page,"cariBakiyeUyari");
                 return;
             }
 
@@ -319,8 +350,8 @@ namespace MobarchSipEkran
 
             // Şu anki siparişin genel toplamı
             decimal siparisGenelToplam = ParseDec(txtGenelToplam.Text);
-            
-           
+
+
             // Sipariş sonrası kalan limit
             decimal kalanLimit = kullanilabilir - siparisGenelToplam;
 
@@ -341,10 +372,8 @@ namespace MobarchSipEkran
             if (string.IsNullOrEmpty(imps))
                 throw new Exception("IMPSERI boş geldi.");
 
-            // İlk 3 hane prefix
             string prefix = imps.Length >= 3 ? imps.Substring(0, 3) : imps.PadRight(3, '0');
 
-            // 2) Bu seri ile başlayan en büyük FATIRS_NO'yu çek
             const string sql = @"
         SELECT MAX(FATIRS_NO) AS SONNO
         FROM dbo.tFatura
@@ -385,13 +414,6 @@ namespace MobarchSipEkran
             return prefix + nextNumeric;
         }
 
-        private void TemizleDetay()
-        {
-            txtStokAdi.Text = "";
-            txtMiktar.Text = "";
-            txtStokKodu.Text = "";
-            txtFiyat.Text = "";
-        }
-
+       
     }
 }

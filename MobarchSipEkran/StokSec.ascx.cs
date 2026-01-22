@@ -1,9 +1,14 @@
-﻿using System;
+﻿using MobarchSipEkran.Class;
+using System;
 using System.Data;
 using System.Data.SqlClient;
+using System.Drawing;
+using System.Security.Cryptography;
 using System.Web;
+using System.Web.Configuration;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.Expressions;
 
 namespace MobarchSipEkran
 {
@@ -20,35 +25,42 @@ namespace MobarchSipEkran
         protected override void OnInit(EventArgs e)
         {
             base.OnInit(e);
-            // Her postback'te DataKeys’in sağlam kalması için arama kriterini koruyarak bind edeceğiz.
-            // İstersen bu satırı kaldırıp Page_Load’ta çağırabilirsin; önemli olan postback’te DataKeys’in hazır olması.
+          
         }
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            if (!IsPostBack) Bind("");
+            if (!IsPostBack)
+            {
+                Bind("");
+            }
         }
 
         private void Bind(string term)
         {
             string sql = @"
-                SELECT TOP 50 STOK_KODU, STOK_ADI
-                FROM tStokMaster
-                WHERE (@T='' OR STOK_KODU LIKE @KOD OR STOK_ADI LIKE @AD)
-                ORDER BY STOK_KODU";
+        SELECT TOP 50 
+            S.STOK_KODU, 
+            S.STOK_ADI, 
+            S.SATIS_FIAT1,
+            ISNULL(T.Miktar, 0) AS KayitliMiktar -- Eğer temp tabloda varsa miktar gelir, yoksa 0 gelir
+        FROM tStokMaster S WITH (NOLOCK)
+        LEFT JOIN tSiparisDetayTemp T ON S.STOK_KODU = T.StokKodu AND T.SessionID = @SID
+        WHERE (@T='' OR S.STOK_KODU LIKE @KOD OR S.STOK_ADI LIKE @AD)
+        ORDER BY T.Miktar DESC";
+
             var dt = Db.ExecuteDataTable(sql,
+                new SqlParameter("@SID", Session.SessionID),
                 new SqlParameter("@T", term ?? string.Empty),
                 new SqlParameter("@KOD", (term ?? string.Empty) + "%"),
                 new SqlParameter("@AD", "%" + (term ?? string.Empty) + "%"));
-
+          
             gv.DataSource = dt;
             gv.DataBind();
+            
         }
 
-        protected void btnAra_Click(object sender, EventArgs e)
-        {
-            Bind(txtAra.Text?.Trim());
-        }
+     
 
         protected void gv_RowDataBound(object sender, GridViewRowEventArgs e)
         {
@@ -57,38 +69,103 @@ namespace MobarchSipEkran
                 var btn = (LinkButton)e.Row.FindControl("btnSec");
                 if (btn != null)
                 {
-                    // FULL POSTBACK: UpdatePanel yerine klasik postback
                     ScriptManager.GetCurrent(Page).RegisterPostBackControl(btn);
+                }
+                var dataRow = e.Row.DataItem as DataRowView;
+                decimal kayitliMiktar = Convert.ToDecimal(dataRow["KayitliMiktar"]);
+                TextBox txt = e.Row.FindControl("txtMiktar") as TextBox;
+                if (txt != null)
+                {
+                    txt.CssClass += "is-valid";
                 }
             }
         }
 
         protected void gv_RowCommand(object sender, GridViewCommandEventArgs e)
         {
-            if (e.CommandName != "Sec") return;
-
-            try
+            if (e.CommandName == "Ekle")
             {
-                var row = (GridViewRow)((Control)e.CommandSource).NamingContainer;
-                int idx = row.RowIndex;
+                int rowIndex = Convert.ToInt32(e.CommandArgument);
+                GridViewRow row = gv.Rows[rowIndex];
+                string stokKodu = gv.DataKeys[rowIndex].Values["STOK_KODU"].ToString();
+                TextBox txtMiktar = (TextBox)row.FindControl("txtMiktar");
+                decimal miktar = 0;
+                decimal.TryParse(txtMiktar.Text, out miktar);
+          
 
-                if (gv.DataKeys == null || gv.DataKeys.Count <= idx)
-                    throw new InvalidOperationException("Seçimde DataKeys bulunamadı. ViewState/Bind kontrol edin.");
-
-                string kod = Convert.ToString(gv.DataKeys[idx].Values["STOK_KODU"]);
-                string ad = Convert.ToString(gv.DataKeys[idx].Values["STOK_ADI"]);
-
-                if (string.IsNullOrEmpty(kod))
-                    throw new InvalidOperationException("Geçersiz satır: STOK_KODU boş.");
-
-                StokSecildi?.Invoke(this, new StokSecEventArgs { StokKodu = kod, StokAdi = ad });
+                if (miktar > 0 )
+                {
+                    TempKaydet(stokKodu, miktar);
+                    txtMiktar.CssClass = "form-control form-control-sm is-valid";
+                    
+                }
+               
             }
-            catch (Exception ex)
+
+            if (e.CommandName=="Sil")
             {
-                // 500 yerine kullanıcıya göster; PRM çakılmasın.
-                ScriptManager.RegisterStartupScript(this, GetType(), "secErr",
-                    "alert('Seç işleminde hata: " + HttpUtility.JavaScriptStringEncode(ex.Message) + "');", true);
+                int rowIndex = Convert.ToInt32(e.CommandArgument);
+                GridViewRow row = gv.Rows[rowIndex];
+                string stokKoduSil = gv.DataKeys[rowIndex].Values["STOK_KODU"].ToString();
+                TextBox txtMiktar = row.FindControl("txtMiktar") as TextBox;
+
+                TempSil(stokKoduSil);
             }
+
+        }
+
+        private void TempKaydet(string stokKodu, decimal miktar)
+        {
+            string sessionID = Session["SID"].ToString(); 
+            string sql = @"IF EXISTS(SELECT 1 FROM tSiparisDetayTemp WHERE SessionID = @SID AND StokKodu = @SK)
+        BEGIN
+            UPDATE tSiparisDetayTemp SET Miktar = @M, KayitTarihi = GETDATE()
+            WHERE SessionID = @SID AND StokKodu = @SK
+        END
+        ELSE
+        BEGIN
+            INSERT INTO tSiparisDetayTemp(SessionID, StokKodu, Miktar, KayitTarihi)
+            VALUES(@SID, @SK, @M, GETDATE())
+        END";
+
+            Db.ExecuteNonQuery(sql, new SqlParameter("@SID", sessionID),
+                new SqlParameter("@SK", stokKodu),
+                new SqlParameter("@M", miktar));
+            BildirimHelper.MesajGoster(upStok, "Ürün Eklendi", false);
+        }
+
+        private void TempSil(string stokKodu)
+        {
+            string sessionID = Session["SID"].ToString();
+
+            var sorgu = @"Select * from tSiparisDetayTemp WHERE SessionId = @SID AND StokKodu = @SK";
+            var kayit = Db.ExecuteDataTable(sorgu,new SqlParameter("@SID", sessionID),
+                new SqlParameter("@SK",stokKodu));
+
+            if(kayit.Rows.Count > 0)
+            {
+                string sql = @"Delete FROM tSiparisDetayTemp WHERE SessionId = @SID AND StokKodu = @SK";
+
+                Db.ExecuteNonQuery(sql, new SqlParameter("@SID", sessionID),
+                    new SqlParameter("@SK", stokKodu));
+                Bind("");
+                BildirimHelper.MesajGoster(upStok, "Ürün kaldırıldı", true);
+
+            }
+            else
+            {
+
+                BildirimHelper.MesajGoster(upStok, "Ürün bulunamadı", true);
+            }
+
+        
+
+        }
+
+        protected void txtAra_TextChanged(object sender, EventArgs e)
+        {
+            Bind(txtAra.Text.Trim());
+            txtAra.Focus();
         }
     }
-}
+    }

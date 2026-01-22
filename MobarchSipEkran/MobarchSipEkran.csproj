@@ -176,6 +176,7 @@
     </Compile>
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Class\Alert.cs" />
+    <Compile Include="Class\BildirimHelper.cs" />
     <Compile Include="Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

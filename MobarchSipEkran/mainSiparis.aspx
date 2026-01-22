@@ -167,26 +167,26 @@
                         <div class="col-md-4">
                             <label class="form-label label-xs text-muted">Stok Kodu</label>
                             <div class="input-group input-group-sm">
-                                <asp:TextBox ID="txtStokKodu" runat="server" CssClass="form-control"  EnableViewState="false"/>
-                                <button type="button" class="btn btn-outline-light border-0" data-bs-toggle="modal" data-bs-target="#stokModal" title="Stok Seç">
-                                    <i class="bi bi-search"></i>
+                                <asp:TextBox ID="txtStokKodu" runat="server" CssClass="form-control" ClientIDMode="Static"   />
+                                <button type="button"  class="btn btn-outline-dark border-0" data-bs-toggle="modal" data-bs-target="#stokModal" title="Stok Seç">
+                                    <i class="bi bi-search "></i>
                                 </button>
                             </div>
                         </div>
 
                         <div class="col-md-4">
                             <label class="form-label label-xs text-muted">Stok Adı</label>
-                            <asp:TextBox ID="txtStokAdi" runat="server" CssClass="form-control form-control-sm" EnableViewState="false" />
+                            <asp:TextBox ID="txtStokAdi" runat="server"  CssClass="form-control form-control-sm"  ClientIDMode="Static"  />
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label label-xs text-muted">Miktar</label>
-                            <asp:TextBox ID="txtMiktar" runat="server" CssClass="form-control form-control-sm number" EnableViewState="false" />
+                            <asp:TextBox ID="txtMiktar" runat="server" CssClass="form-control form-control-sm number" ClientIDMode="Static"   />
                         </div>
 
                         <div class="col-md-2">
                             <label class="form-label label-xs text-muted">Fiyat</label>
-                            <asp:TextBox ID="txtFiyat" runat="server" CssClass="form-control form-control-sm number" EnableViewState="false"     />
+                            <asp:TextBox ID="txtFiyat" runat="server"  CssClass="form-control form-control-sm number"   ClientIDMode="Static"  />
                         </div>
 
                         <div class="col-md-2">
@@ -280,7 +280,6 @@
 
     </div>
 
-    <!-- 2. SATIR: FULL-WIDTH GRID (SATIR DETAYLARI) -->
     <div class="row mt-3">
         <div class="col-12">
             <asp:UpdatePanel ID="upGrid" runat="server" UpdateMode="Conditional">
@@ -382,6 +381,26 @@
                     .replace(',', '.');
             }
         });
+
+        function stokSec(stokKodu, stokAdi, fiyat) {
+
+            document.getElementById("<%= txtStokKodu.ClientID %>").value = stokKodu;
+            document.getElementById("<%= txtStokAdi.ClientID %>").value = stokAdi;
+            document.getElementById("<%= txtFiyat.ClientID %>").value = fiyat;
+
+
+        
+            $('#stokModal').modal('hide');
+
+            
+
+        }
+
+
+   
+        
+
+       
     </script>
 
 </asp:Content>
