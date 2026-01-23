@@ -20,7 +20,7 @@ namespace MobarchSipEkran
             public string StokAdi { get; set; }
         }
 
-        public event EventHandler<StokSecEventArgs> StokSecildi;
+        public event EventHandler<StokSecEventArgs> onStokSecildi;
 
         protected override void OnInit(EventArgs e)
         {
@@ -39,7 +39,7 @@ namespace MobarchSipEkran
         private void Bind(string term)
         {
             string sql = @"
-        SELECT TOP 50 
+        SELECT 
             S.STOK_KODU, 
             S.STOK_ADI, 
             S.SATIS_FIAT1,
@@ -88,10 +88,19 @@ namespace MobarchSipEkran
                 int rowIndex = Convert.ToInt32(e.CommandArgument);
                 GridViewRow row = gv.Rows[rowIndex];
                 string stokKodu = gv.DataKeys[rowIndex].Values["STOK_KODU"].ToString();
+                string stokAdi = gv.DataKeys[rowIndex].Values["STOK_ADI"].ToString();
                 TextBox txtMiktar = (TextBox)row.FindControl("txtMiktar");
                 decimal miktar = 0;
                 decimal.TryParse(txtMiktar.Text, out miktar);
-          
+                if (onStokSecildi != null)
+                {
+                    onStokSecildi(this, new StokSecEventArgs
+                    {
+                        StokKodu = stokKodu,
+                        StokAdi = stokAdi
+                    });
+                }
+                BildirimHelper.MesajGoster(this, "Ürün Kaydı yapıldı",false);
 
                 if (miktar > 0 )
                 {
@@ -166,6 +175,15 @@ namespace MobarchSipEkran
         {
             Bind(txtAra.Text.Trim());
             txtAra.Focus();
+        }
+
+        protected void btnAktar_Click(object sender, EventArgs e)
+        {
+            if (onStokSecildi != null)
+            {
+                onStokSecildi(this, new StokSecEventArgs());
+            }
+            ScriptManager.RegisterStartupScript(this.Page, GetType(), "closeModal", "$('#stokModal').modal('hide');", true);
         }
     }
     }

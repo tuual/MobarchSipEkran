@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" MasterPageFile="~/Site.Master" CodeBehind="mainSiparis.aspx.cs" Inherits="MobarchSipEkran.mainSiparis" %>
+﻿ <%@ Page Language="C#" AutoEventWireup="true" MasterPageFile="~/Site.Master" CodeBehind="mainSiparis.aspx.cs" Inherits="MobarchSipEkran.mainSiparis" %>
 
 <%@ Register Src="~/StokSec.ascx" TagPrefix="uc" TagName="StokSec" %>
 <asp:Content ID="mainSiparisContent" ContentPlaceHolderID="MainContent" runat="server">
@@ -164,37 +164,17 @@
                 <div class="card-body">
                     <div class="row g-3 align-items-end">
 
-                        <div class="col-md-4">
-                            <label class="form-label label-xs text-muted">Stok Kodu</label>
-                            <div class="input-group input-group-sm">
-                                <asp:TextBox ID="txtStokKodu" runat="server" CssClass="form-control" ClientIDMode="Static"   />
-                                <button type="button"  class="btn btn-outline-dark border-0" data-bs-toggle="modal" data-bs-target="#stokModal" title="Stok Seç">
-                                    <i class="bi bi-search "></i>
-                                </button>
-                            </div>
-                        </div>
+                     
 
-                        <div class="col-md-4">
-                            <label class="form-label label-xs text-muted">Stok Adı</label>
-                            <asp:TextBox ID="txtStokAdi" runat="server"  CssClass="form-control form-control-sm"  ClientIDMode="Static"  />
-                        </div>
 
                         <div class="col-md-2">
-                            <label class="form-label label-xs text-muted">Miktar</label>
-                            <asp:TextBox ID="txtMiktar" runat="server" CssClass="form-control form-control-sm number" ClientIDMode="Static"   />
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label label-xs text-muted">Fiyat</label>
-                            <asp:TextBox ID="txtFiyat" runat="server"  CssClass="form-control form-control-sm number"   ClientIDMode="Static"  />
-                        </div>
-
-                        <div class="col-md-2">
-                            <asp:Button ID="btnEkle" runat="server" Text="Ekle"
-                                CssClass="btn btn-success btn-sm w-100 mt-2 mt-md-4"
+                            <asp:Button ID="btnEkle" runat="server" Text="Ürün Ekleme 🔎"
+                                 data-bs-toggle="modal" data-bs-target="#stokModal"
+                                CssClass="btn btn-success btn-sm mt-2 w-100 "
+                                
                                 UseSubmitBehavior="false" OnClick="btnEkle_Click" />
                         </div>
-
+                                
                     </div>
                 </div>
             </div>
@@ -353,6 +333,7 @@
 
                 <Triggers>
                     <asp:AsyncPostBackTrigger ControlID="btnEkle" EventName="Click" />
+                    <asp:AsyncPostBackTrigger ControlID="stokSecModal" EventName="onStokSecildi" />
                 </Triggers>
 
             </asp:UpdatePanel>
@@ -382,20 +363,7 @@
             }
         });
 
-        function stokSec(stokKodu, stokAdi, fiyat) {
-
-            document.getElementById("<%= txtStokKodu.ClientID %>").value = stokKodu;
-            document.getElementById("<%= txtStokAdi.ClientID %>").value = stokAdi;
-            document.getElementById("<%= txtFiyat.ClientID %>").value = fiyat;
-
-
-        
-            $('#stokModal').modal('hide');
-
-            
-
-        }
-
+  
 
    
         

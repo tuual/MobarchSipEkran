@@ -42,11 +42,7 @@ namespace MobarchSipEkran
             }
             if (!IsPostBack)
             {
-                txtGenelToplam.Enabled = false;
-                txtFiyat.Enabled = false;
-                txtStokAdi.Enabled = false;
-                txtBelgeNo.Enabled = false;
-                txtStokKodu.Enabled = false;
+               
 
                 try
                 {
@@ -99,21 +95,46 @@ namespace MobarchSipEkran
 
         private void BindGrid()
         {
-            gvStoklar.DataSource = Stoklar;
-            gvStoklar.DataBind();
-        }
+           
+                if (Session["ConnStr"] == null)
+                {
+                    return;
+                }
+                else
+                {
+                    string sessionID = Session["SID"].ToString();
+                    string sql = @"SELECT T.StokKodu, S.STOK_ADI as StokAdi, T.Miktar, S.SATIS_FIAT1 as Fiyat, 
+                   (T.Miktar * S.SATIS_FIAT1) as Tutar, (S.KDV_ORANI / 100.0) as KdvOran,
+                    ((T.Miktar * S.SATIS_FIAT1)/100)*S.KDV_ORANI AS 'KdvTutar',
+                    (((T.Miktar * S.SATIS_FIAT1)*S.KDV_ORANI)/100)+T.Miktar * S.SATIS_FIAT1 AS 'KdvDahilTutar'
+                   FROM tSiparisDetayTemp T 
+                   INNER JOIN tStokMaster S ON T.StokKodu = S.STOK_KODU
+                   WHERE T.SessionID = @SID";
+                    DataTable dt = Db.ExecuteDataTable(sql, new SqlParameter("@SID", sessionID));
+                    Session["Stoklar"] = dt;
+                    gvStoklar.DataSource = dt;
+                    gvStoklar.DataBind();
 
-        // --- Stok Seç modali event’i ---------------------------------------
+                }
+            }
+           
+
+            
+            
+             
+        
+
         protected void stokSecModal_StokSecildi(object sender, StokSec.StokSecEventArgs e)
         {
-            txtStokKodu.Text = e.StokKodu;
-            txtStokAdi.Text = e.StokAdi;
+          
 
             try
             {
-                var row = Db.ExecuteRow("SELECT SATIS_FIAT1 FROM tStokMaster WHERE STOK_KODU=@K", new SqlParameter("@K", e.StokKodu));
-                if (row != null && row["SATIS_FIAT1"] != DBNull.Value) txtFiyat.Text = Convert.ToDecimal(row["SATIS_FIAT1"]).ToString("N2");
-                else txtFiyat.Text = "0,00";
+                BindGrid();
+                RefreshTotalsPanel();
+                upGrid.Update();
+                upTotals.Update();
+
 
             }
             catch (Exception ex)
@@ -124,106 +145,10 @@ namespace MobarchSipEkran
 
         }
 
-        // --- EKLE / GÜNCELLE ------------------------------------------------
-        protected void  btnEkle_Click(object sender, EventArgs e)
+        protected void btnEkle_Click(object sender, EventArgs e)
         {
-            var kod = txtStokKodu.Text.Trim();
-            if (string.IsNullOrWhiteSpace(txtStokKodu.Text))
-            {
-                ScriptManager.RegisterStartupScript(this, typeof(Page), "uyariStok", "alert('Stok Seçimi Yapılmalıdır.')", true);
-                return;
-            }
-
-            decimal miktar = ParseDec(txtMiktar.Text);
-            decimal fiyat = ParseDec(txtFiyat.Text);
-            string stokAdi = (txtStokAdi.Text ?? "").Trim();
-
-            decimal kdvOran = 0m;
-
-            if (string.IsNullOrWhiteSpace(stokAdi) || fiyat <= 0m)
-            {
-                var row = Db.ExecuteRow(
-                    "SELECT STOK_ADI, SATIS_FIAT1, KDV_ORANI FROM tStokMaster WHERE STOK_KODU=@K",
-                    new SqlParameter("@K", txtStokKodu.Text));
-
-                if (row == null)
-                {
-                    ClientScript.RegisterStartupScript(GetType(), "yok", "alert('Stok bulunamadı.');", true);
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(stokAdi))
-                    stokAdi = Convert.ToString(row["STOK_ADI"]);
-
-                if (fiyat <= 0m && row["SATIS_FIAT1"] != DBNull.Value)
-                    fiyat = Convert.ToDecimal(row["SATIS_FIAT1"], tr);
-
-                kdvOran = NormalizeKdv(row["KDV_ORANI"], tr);
-            }
-            else
-            {
-                var row = Db.ExecuteRow(
-                    "SELECT KDV_ORANI FROM tStokMaster WHERE STOK_KODU=@K",
-                    new SqlParameter("@K", kod));
-
-                kdvOran = NormalizeKdv(row?["KDV_ORANI"], tr);
-            }
-
-            decimal net = Math.Round(miktar * fiyat, 2);
-            decimal kdv = Math.Round(net * kdvOran, 2);
-            decimal dahil = net + kdv;
-
-            var dt = Stoklar;
-
-            var mevcut = dt.AsEnumerable()
-                .FirstOrDefault(r =>
-                    string.Equals(r.Field<string>("StokKodu"),
-                                  kod,
-                                  StringComparison.OrdinalIgnoreCase));
-
-            if (mevcut != null)
-            {
-                mevcut["StokAdi"] = stokAdi;
-                mevcut["Miktar"] = miktar;
-                mevcut["Fiyat"] = fiyat;
-                mevcut["Tutar"] = net;
-                mevcut["KdvOran"] = kdvOran;
-                mevcut["KdvTutar"] = kdv;
-                mevcut["KdvDahilTutar"] = dahil;
-            }
-            else
-            {
-                DataRow yeni = dt.NewRow();
-                yeni["StokKodu"] = kod;
-                yeni["StokAdi"] = stokAdi;
-                yeni["Miktar"] = miktar;
-                yeni["Fiyat"] = fiyat;
-                yeni["Tutar"] = net;
-                yeni["KdvOran"] = kdvOran;
-                yeni["KdvTutar"] = kdv;
-                yeni["KdvDahilTutar"] = dahil;
-                dt.Rows.Add(yeni);
-                Session["Stoklar"] = yeni;
-
-                gvStoklar.DataSource = dt;
-                gvStoklar.DataBind();
-              
-
-            }
-
-            Stoklar = dt;
-            BindGrid();
-            RefreshTotalsPanel();
-
-            //js kodu -- textboxları silme yeri
-            ScriptManager.RegisterStartupScript(this, typeof(Page), "UpdateMsg", "" +
-                "document.getElementById('txtStokKodu').value = '';" +
-                "document.getElementById('txtStokAdi').value = '';" +
-                "document.getElementById('txtFiyat').value = '';" +
-                "document.getElementById('txtMiktar').value = '';", true);      
-        
-
         }
+
 
 
         protected void gvStoklar_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -239,6 +164,14 @@ namespace MobarchSipEkran
                 var dr = dt.AsEnumerable().FirstOrDefault(r => r.Field<string>("StokKodu") == kod);
                 if (dr != null)
                 {
+                    var varmi = Db.ExecuteNonQuery("SELECT COUNT(*) FROM tSiparisDetayTemp WHERE StokKodu = @SK AND SessionId = @SID", new SqlParameter("@SK", kod),
+                        new SqlParameter("@SID", Session.SessionID));
+                    if (varmi == 0)
+                    {
+                        BildirimHelper.MesajGoster(this, "Ürün tSiparisDetayTemp tablosunda SessionId ve StokKodu bulunamadı", false);
+                    }
+                    Db.ExecuteNonQuery("Delete from tSiparisDetayTemp WHERE StokKodu = @SK and SessionId = @SID", new SqlParameter("@SK", kod),
+                        new SqlParameter("@SID", Session.SessionID));
                     dt.Rows.Remove(dr);   
                 }
 
@@ -259,30 +192,29 @@ namespace MobarchSipEkran
             var dr = dt.AsEnumerable().First(r => r.Field<string>("StokKodu") == kod);
 
             decimal yeniMiktar = ParseDec(txt.Text);
-            decimal fiyat = dr.Field<decimal>("Fiyat");
-            decimal kdvOran = dr.Field<decimal?>("KdvOran") ?? 0m;
-
+            decimal fiyat = dr["Fiyat"] == DBNull.Value ? 0m : Convert.ToDecimal(dr["Fiyat"]);
+            decimal kdvOran = dr["KdvOran"] == DBNull.Value ? 0m : Convert.ToDecimal(dr["KdvOran"]);
+            Db.ExecuteNonQuery("UPDATE tSiparisDetayTemp SET Miktar = @Miktar WHERE StokKodu = @SK and SessionId = @SID ",
+                new SqlParameter("@Miktar", yeniMiktar), new SqlParameter("@SK", kod),
+                new SqlParameter("@SID", Session.SessionID.ToString()));
             decimal net = Math.Round(yeniMiktar * fiyat, 6);
             decimal kdv = Math.Round(net * kdvOran, 6);
             decimal dahil = net + kdv;
 
-            dr["Miktar"] = yeniMiktar;
-            dr["Tutar"] = net;
-            dr["KdvTutar"] = kdv;
-            dr["KdvDahilTutar"] = dahil;
+            
 
             Stoklar = dt;
             BindGrid();
             RefreshTotalsPanel();
         }
 
-        // --- TOPLAM HESAPLAMA
+      
         private void RecalcTotals()
         {
             var dt = Stoklar;
 
-            decimal brutNet = dt.AsEnumerable().Sum(r => r.Field<decimal?>("Tutar") ?? 0m);
-            decimal toplamKdv = dt.AsEnumerable().Sum(r => r.Field<decimal?>("KdvTutar") ?? 0m);
+            decimal brutNet = dt.AsEnumerable().Sum(r => Convert.ToDecimal(r["Tutar"] == DBNull.Value ? 0 : r["Tutar"]));
+            decimal toplamKdv = dt.AsEnumerable().Sum(r => Convert.ToDecimal(r["KdvTutar"] == DBNull.Value ? 0 : r["KdvTutar"]));
 
             decimal iskonto = ParseDec(txtIskonto.Text);
             if (iskonto < 0m) iskonto = 0m;

@@ -17,7 +17,9 @@
           <div class="col-md-6">
             <asp:TextBox ID="txtAra" OnTextChanged="txtAra_TextChanged" AutoPostBack="true" onkeydown="return (event.keyCode !== 13);" runat="server" CssClass="form-control" placeholder="Kod / Ad ile ara..." />
           </div>
-          
+          <div class="row g-2 mb-2">
+              <label class="text-danger">Ürünlerin miktarlarını girdikten sonra Ürün Ekle butonuna basınız.</label>
+          </div>
         </div>
 
         <asp:GridView ID="gv" runat="server"
@@ -58,6 +60,12 @@
               </asp:TemplateField>
           </Columns>
         </asp:GridView>
+                  <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
+                      <asp:LinkButton ID="btnAktar" runat="server" CssClass="btn btn-success" OnClick="btnAktar_Click">
+                          <i class="bi bi-check-all"></i> Seçilenleri Listeye Ekle
+                      </asp:LinkButton>
+                  </div>
                       </ContentTemplate>
           </asp:UpdatePanel>
       </div>
