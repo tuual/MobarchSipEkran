@@ -168,11 +168,16 @@
 
 
                         <div class="col-md-2">
-                            <asp:Button ID="btnEkle" runat="server" Text="Ürün Ekleme 🔎"
+                            <asp:LinkButton ID="btnEkle" runat="server" Text="Ürün Ekleme"
                                  data-bs-toggle="modal" data-bs-target="#stokModal"
                                 CssClass="btn btn-success btn-sm mt-2 w-100 "
                                 
-                                UseSubmitBehavior="false" OnClick="btnEkle_Click" />
+                                
+                                UseSubmitBehavior="false" OnClick="btnEkle_Click" >
+                                Ürün Ekleme
+                                <i class="bi bi-search"></i>
+                            </asp:LinkButton>
+                            
                         </div>
                                 
                     </div>
@@ -285,32 +290,27 @@
                                     <Columns>
 
                                         <asp:BoundField DataField="StokKodu" HeaderText="Stok Kodu" />
-                                        <asp:BoundField DataField="StokAdi" HeaderText="Stok Adı" />
+                                        <asp:BoundField DataField="StokAdi" HeaderText="Stok Adı"  />
 
-                                        <asp:TemplateField HeaderText="Miktar">
-                                            <ItemTemplate>
-                                                <asp:TextBox ID="txtGridMiktar" runat="server"
-                                                    Text='<%# Eval("Miktar","{0:0.##}") %>'
-                                                    CssClass="form-control form-control-sm number w-qty"
-                                                    AutoPostBack="true"
-                                                    OnTextChanged="RowMiktar_TextChanged" />
-                                            </ItemTemplate>
-                                        </asp:TemplateField>
+                                     
+                                           
+                                          <asp:BoundField DataField="Miktar" HeaderText="Miktar"
+                                         DataFormatString="{0:N2}" ItemStyle-CssClass="number text-center" HeaderStyle-CssClass="text-center" />
 
                                         <asp:BoundField DataField="Fiyat" HeaderText="Birim Fiyat"
-                                            DataFormatString="{0:N2}" ItemStyle-CssClass="number" />
+                                            DataFormatString="{0:N2}" ItemStyle-CssClass="number text-bg-success text-center"  HeaderStyle-CssClass="text-center"/>
 
                                         <asp:BoundField DataField="Tutar" HeaderText="Net Tutar"
-                                            DataFormatString="{0:N2}" ItemStyle-CssClass="number" />
+                                            DataFormatString="{0:N2}" ItemStyle-CssClass="number text-center" HeaderStyle-CssClass="text-center" />
 
                                         <asp:BoundField DataField="KdvOran" HeaderText="KDV %"
-                                            DataFormatString="{0:P0}" HtmlEncode="false" ItemStyle-CssClass="number" />
+                                            DataFormatString="{0:P0}" HtmlEncode="false" ItemStyle-CssClass="number text-center" HeaderStyle-CssClass="text-center"/>
 
                                         <asp:BoundField DataField="KdvTutar" HeaderText="KDV Tutar"
-                                            DataFormatString="{0:N2}" ItemStyle-CssClass="number" />
+                                            DataFormatString="{0:N2}" ItemStyle-CssClass="number text-center" HeaderStyle-CssClass="text-center" />
 
                                         <asp:BoundField DataField="KdvDahilTutar" HeaderText="KDV Dâhil"
-                                            DataFormatString="{0:N2}" ItemStyle-CssClass="number" />
+                                            DataFormatString="{0:N2}" ItemStyle-CssClass="number text-center" HeaderStyle-CssClass="text-center" />
 
                                         <asp:TemplateField HeaderText="">
                                             <ItemTemplate>

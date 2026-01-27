@@ -34,6 +34,7 @@ namespace MobarchSipEkran
             {
                 Bind("");
             }
+            
         }
 
         private void Bind(string term)
@@ -123,10 +124,26 @@ namespace MobarchSipEkran
 
         }
 
-        private void TempKaydet(string stokKodu, decimal miktar)
+        private void TempKaydet(string stokKodu, decimal miktar,bool T)
         {
-            string sessionID = Session["SID"].ToString(); 
-            string sql = @"IF EXISTS(SELECT 1 FROM tSiparisDetayTemp WHERE SessionID = @SID AND StokKodu = @SK)
+            string stokFiyat = "SELECT SATIS_FIAT1 from tStokMaster WHERE STOK_KODU = @STOK";
+           var kayit = Db.ExecuteDataTable(stokFiyat, new SqlParameter("@STOK", stokKodu));
+            if (kayit.Rows.Count > 0)
+            {
+                DataRow datarow = kayit.Rows[0];
+
+                decimal fiyat = Convert.ToDecimal(datarow["SATIS_FIAT1"]); // Sqlden kolon çekme
+
+                if (fiyat == 0)
+                {
+
+                    BildirimHelper.MesajGoster(upStok, "Fiyatı Sıfır Olan Ürün Seçilemez", true);
+                    T = false;
+                }
+                else
+                {
+                    string sessionID = Session["SID"].ToString();
+                    string sql = @"IF EXISTS(SELECT 1 FROM tSiparisDetayTemp WHERE SessionID = @SID AND StokKodu = @SK)
         BEGIN
             UPDATE tSiparisDetayTemp SET Miktar = @M, KayitTarihi = GETDATE()
             WHERE SessionID = @SID AND StokKodu = @SK
@@ -137,11 +154,19 @@ namespace MobarchSipEkran
             VALUES(@SID, @SK, @M, GETDATE())
         END";
 
-            Db.ExecuteNonQuery(sql, new SqlParameter("@SID", sessionID),
-                new SqlParameter("@SK", stokKodu),
-                new SqlParameter("@M", miktar));
-            BildirimHelper.MesajGoster(upStok, "Ürün Eklendi", false);
-        }
+                    Db.ExecuteNonQuery(sql, new SqlParameter("@SID", sessionID),
+                        new SqlParameter("@SK", stokKodu),
+                        new SqlParameter("@M", miktar));
+                    BildirimHelper.MesajGoster(upStok, "Ürün Eklendi", false);
+                    T = true;
+                }
+            }
+            
+
+           
+            }
+           
+        
 
         private void TempSil(string stokKodu)
         {

@@ -84,7 +84,7 @@ namespace MobarchSipEkran
         /// Otomatik olarak oluşturulan alan.
         /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnEkle;
+        protected global::System.Web.UI.WebControls.LinkButton btnEkle;
 
         /// <summary>
         /// upTotals denetimi.

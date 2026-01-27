@@ -180,7 +180,7 @@ namespace MobarchSipEkran
                 RefreshTotalsPanel();    
             }
         }
-        protected void RowMiktar_TextChanged(object sender, EventArgs e)
+      /*  protected void RowMiktar_TextChanged(object sender, EventArgs e)
         {
             var txt = (TextBox)sender;
             var row = (GridViewRow)txt.NamingContainer;
@@ -208,7 +208,7 @@ namespace MobarchSipEkran
             RefreshTotalsPanel();
         }
 
-      
+      */
         private void RecalcTotals()
         {
             var dt = Stoklar;
