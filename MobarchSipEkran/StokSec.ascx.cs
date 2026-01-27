@@ -105,7 +105,7 @@ namespace MobarchSipEkran
 
                 if (miktar > 0 )
                 {
-                    TempKaydet(stokKodu, miktar);
+                    TempKaydet(stokKodu, miktar,false);
                     txtMiktar.CssClass = "form-control form-control-sm is-valid";
                     
                 }
