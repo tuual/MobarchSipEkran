@@ -107,7 +107,7 @@ namespace MobarchSipEkran
                    (T.Miktar * S.SATIS_FIAT1) as Tutar, (S.KDV_ORANI / 100.0) as KdvOran,
                     ((T.Miktar * S.SATIS_FIAT1)/100)*S.KDV_ORANI AS 'KdvTutar',
                     (((T.Miktar * S.SATIS_FIAT1)*S.KDV_ORANI)/100)+T.Miktar * S.SATIS_FIAT1 AS 'KdvDahilTutar'
-                   FROM tSiparisDetayTemp T 
+                   FROM tWebSiparis T 
                    INNER JOIN tStokMaster S ON T.StokKodu = S.STOK_KODU
                    WHERE T.SessionID = @SID";
                     DataTable dt = Db.ExecuteDataTable(sql, new SqlParameter("@SID", sessionID));
@@ -164,14 +164,15 @@ namespace MobarchSipEkran
                 var dr = dt.AsEnumerable().FirstOrDefault(r => r.Field<string>("StokKodu") == kod);
                 if (dr != null)
                 {
-                    var varmi = Db.ExecuteNonQuery("SELECT COUNT(*) FROM tSiparisDetayTemp WHERE StokKodu = @SK AND SessionId = @SID", new SqlParameter("@SK", kod),
+                    var varmi = Db.ExecuteNonQuery("SELECT COUNT(*) FROM tWebSiparis WHERE StokKodu = @SK AND SessionId = @SID", new SqlParameter("@SK", kod),
                         new SqlParameter("@SID", Session.SessionID));
                     if (varmi == 0)
                     {
-                        BildirimHelper.MesajGoster(this, "Ürün tSiparisDetayTemp tablosunda SessionId ve StokKodu bulunamadı", false);
+                        BildirimHelper.MesajGoster(this, "Ürün tWebSiparis tablosunda SessionId ve StokKodu bulunamadı", false);
                     }
-                    Db.ExecuteNonQuery("Delete from tSiparisDetayTemp WHERE StokKodu = @SK and SessionId = @SID", new SqlParameter("@SK", kod),
+                    Db.ExecuteNonQuery("Delete from tWebSiparis WHERE StokKodu = @SK and SessionId = @SID", new SqlParameter("@SK", kod),
                         new SqlParameter("@SID", Session.SessionID));
+                    
                     dt.Rows.Remove(dr);   
                 }
 
@@ -194,7 +195,7 @@ namespace MobarchSipEkran
             decimal yeniMiktar = ParseDec(txt.Text);
             decimal fiyat = dr["Fiyat"] == DBNull.Value ? 0m : Convert.ToDecimal(dr["Fiyat"]);
             decimal kdvOran = dr["KdvOran"] == DBNull.Value ? 0m : Convert.ToDecimal(dr["KdvOran"]);
-            Db.ExecuteNonQuery("UPDATE tSiparisDetayTemp SET Miktar = @Miktar WHERE StokKodu = @SK and SessionId = @SID ",
+            Db.ExecuteNonQuery("UPDATE tWebSiparisDetayTemp SET Miktar = @Miktar WHERE StokKodu = @SK and SessionId = @SID ",
                 new SqlParameter("@Miktar", yeniMiktar), new SqlParameter("@SK", kod),
                 new SqlParameter("@SID", Session.SessionID.ToString()));
             decimal net = Math.Round(yeniMiktar * fiyat, 6);
@@ -226,10 +227,13 @@ namespace MobarchSipEkran
             decimal factor = brutNet > 0m ? araToplam / brutNet : 1m;
             decimal kdvAfter = Math.Round(toplamKdv * factor, 2);
 
+          
+
             txtBrutTutar.Text = brutNet.ToString("N2", tr);
             txtAraToplam.Text = araToplam.ToString("N2", tr);
             txtKdvToplam.Text = kdvAfter.ToString("N2", tr);
             txtGenelToplam.Text = (araToplam + kdvAfter).ToString("N2", tr);
+
         }
 
 
@@ -262,6 +266,7 @@ namespace MobarchSipEkran
         private void CariBilgileri()
         {
             var info = Services.CariService.GetFromSession();
+            
             if (info == null)
             {
                 lblCariBakiye.Text = "0,00";
@@ -271,24 +276,35 @@ namespace MobarchSipEkran
                 alert.AlertMsg("Cari bakiye bilgileri alınamadı", Page,"cariBakiyeUyari");
                 return;
             }
+            if (info.RiskLimiti == 0)
+            {
+                lblCariBakiye.Text = info.Bakiye.ToString("N2", tr);
+                decimal kullanilabilir = Math.Max(0, info.RiskLimiti - info.Bakiye);
 
-            lblCariBakiye.Text = info.Bakiye.ToString("N2", tr);
-            lblRiskLimiti.Text = info.RiskLimiti.ToString("N2", tr);
-
-            
-
-            // Carinin kullanılabilir limiti (CariBakiye.Kullanilabilir)
-            decimal kullanilabilir = Math.Max(0,info.RiskLimiti - info.Bakiye);
-
-            // Şu anki siparişin genel toplamı
-            decimal siparisGenelToplam = ParseDec(txtGenelToplam.Text);
+                decimal siparisGenelToplam = ParseDec(txtGenelToplam.Text);
 
 
-            // Sipariş sonrası kalan limit
-            decimal kalanLimit = kullanilabilir - siparisGenelToplam;
+                decimal kalanLimit = kullanilabilir - siparisGenelToplam;
+            }
+            else
+            {
+                lblCariBakiye.Text = info.Bakiye.ToString("N2", tr);
+                lblRiskLimiti.Text = info.RiskLimiti.ToString("N2", tr);
 
-            lblKalanLimit.Text = kalanLimit.ToString("N2", tr);
-            lblKalanLimit.ForeColor = kalanLimit < 0 ? Color.Red : Color.Black;
+
+
+                decimal kullanilabilir = Math.Max(0, info.RiskLimiti - info.Bakiye);
+
+                decimal siparisGenelToplam = ParseDec(txtGenelToplam.Text);
+
+
+                decimal kalanLimit = kullanilabilir - siparisGenelToplam;
+
+                lblKalanLimit.Text = kalanLimit.ToString("N2", tr);
+                lblKalanLimit.ForeColor = kalanLimit < 0 ? Color.Red : Color.Black;
+            }
+
+             
         }
 
         private string GetNextFatirsNoFromSeri()

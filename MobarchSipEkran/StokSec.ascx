@@ -34,6 +34,7 @@
             <asp:BoundField DataField="STOK_KODU" HeaderText="Kod" />
             <asp:BoundField DataField="STOK_ADI"  HeaderText="Ad" />
             <asp:BoundField DataField="SATIS_FIAT1"  HeaderText="Fiyat" />
+              <asp:BoundField DataField="SatisKdvDahil" HeaderText="KDV" />
             <asp:TemplateField HeaderText="Miktar" ControlStyle-Width="100px">
                 <ItemTemplate>
 
@@ -60,6 +61,7 @@
               </asp:TemplateField>
           </Columns>
         </asp:GridView>
+                  <asp:Label CssClass="text-danger">Kullanılabilir Limit: </asp:Label> <asp:Label ID="lbKullLimit" runat="server" ></asp:Label>
                   <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
                       <asp:LinkButton ID="btnAktar" runat="server" CssClass="btn btn-success" OnClick="btnAktar_Click">
@@ -67,6 +69,7 @@
                       </asp:LinkButton>
                   </div>
                       </ContentTemplate>
+              
           </asp:UpdatePanel>
       </div>
 

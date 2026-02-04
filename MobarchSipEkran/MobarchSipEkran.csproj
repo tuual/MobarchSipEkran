@@ -124,6 +124,7 @@
     <Content Include="Content\Site.css" />
     <Content Include="Default.aspx" />
     <Content Include="Global.asax" />
+    <Content Include="Images\mobarchLogo.png" />
     <Content Include="mainLogin.aspx" />
     <Content Include="mainSiparis.aspx" />
     <Content Include="Scripts\bootstrap.bundle.js" />
@@ -177,6 +178,8 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Class\Alert.cs" />
     <Compile Include="Class\BildirimHelper.cs" />
+    <Compile Include="Class\genelToplamlar.cs" />
+    <Compile Include="Class\SiparisHesaplayici.cs" />
     <Compile Include="Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>

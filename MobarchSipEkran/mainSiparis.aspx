@@ -104,9 +104,7 @@
                     Online sipariş giriş ekranı
                 </span>
             </div>
-            <small class="text-muted">
-                Cari için stok seç, satırları doldur, sağ taraftan risk ve toplamları takip et.
-            </small>
+         
         </div>
         <div class="pill-info d-none d-md-inline-flex align-items-center gap-1">
             <i class="bi bi-calendar-week"></i>
