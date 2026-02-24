@@ -69,13 +69,13 @@ namespace MobarchSipEkran
         protected global::System.Web.UI.WebControls.TextBox txtTarih;
 
         /// <summary>
-        /// TextBox1 denetimi.
+        /// txtAciklama denetimi.
         /// </summary>
         /// <remarks>
         /// Otomatik olarak oluşturulan alan.
         /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox TextBox1;
+        protected global::System.Web.UI.WebControls.TextBox txtAciklama;
 
         /// <summary>
         /// btnEkle denetimi.

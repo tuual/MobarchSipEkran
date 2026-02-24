@@ -40,7 +40,14 @@
 
                     <asp:TextBox ID="txtMiktar" runat="server" Text='<%# Eval("KayitliMiktar").ToString() == "0" ? "" : Eval("KayitliMiktar")%>' Width="100px" CssClass="form-control form-control-sm"  ></asp:TextBox>
                 </ItemTemplate>
+                
             </asp:TemplateField>
+              <asp:TemplateField HeaderText="Birim" ControlStyle-Width="125px">
+                  <ItemTemplate>
+    <asp:DropDownList ID="ddlBirimler" runat="server" CssClass="form-control" Width="100px"></asp:DropDownList>
+</ItemTemplate> 
+              </asp:TemplateField>
+              
             <asp:TemplateField>
               <ItemTemplate>
                 <asp:LinkButton ID="btnEkle" runat="server" CommandName="Ekle" Text="Ürünü Ekle" 
@@ -54,14 +61,14 @@
             </asp:TemplateField>
               <asp:TemplateField>
                     <ItemTemplate>
-        <asp:LinkButton ID="btnSil" runat="server" CommandName="Sil" Text="Kaldır" 
+        <asp:LinkButton ID="btnSil" runat="server" CommandName="Sil" Text="X" 
          CommandArgument='<%# Container.DataItemIndex %>'
          CssClass="btn btn-sm btn-danger"></asp:LinkButton>
   </ItemTemplate>
               </asp:TemplateField>
           </Columns>
         </asp:GridView>
-                  <asp:Label CssClass="text-danger">Kullanılabilir Limit: </asp:Label> <asp:Label ID="lbKullLimit" runat="server" ></asp:Label>
+                  <asp:Label CssClass="text-danger">Açık Bakiye: </asp:Label> <asp:Label ID="lbKullLimit" runat="server" ></asp:Label>
                   <div class="modal-footer">
                       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Vazgeç</button>
                       <asp:LinkButton ID="btnAktar" runat="server" CssClass="btn btn-success" OnClick="btnAktar_Click">
@@ -77,5 +84,7 @@
   </div>
 </div>
 <script>
-    
+    function kayitBasarili() {
+        window.parent.location.reload();
+    }
 </script>

@@ -5439,7 +5439,7 @@ textarea.form-control-lg {
 }
 @media (min-width: 1200px) {
   .modal-xl {
-    --bs-modal-width: 1140px;
+    --bs-modal-width: 1200px;
   }
 }
 .modal-fullscreen {
@@ -5463,7 +5463,7 @@ textarea.form-control-lg {
 
 @media (max-width: 575.98px) {
   .modal-fullscreen-sm-down {
-    width: 100vw;
+    width: 90vw;
     max-width: none;
     height: 100%;
     margin: 0;
@@ -5483,7 +5483,7 @@ textarea.form-control-lg {
 }
 @media (max-width: 767.98px) {
   .modal-fullscreen-md-down {
-    width: 100vw;
+    width: 90vw;
     max-width: none;
     height: 100%;
     margin: 0;
@@ -5503,7 +5503,7 @@ textarea.form-control-lg {
 }
 @media (max-width: 991.98px) {
   .modal-fullscreen-lg-down {
-    width: 100vw;
+    width: 90vw;
     max-width: none;
     height: 100%;
     margin: 0;
@@ -5523,7 +5523,7 @@ textarea.form-control-lg {
 }
 @media (max-width: 1199.98px) {
   .modal-fullscreen-xl-down {
-    width: 100vw;
+    width: 90vw;
     max-width: none;
     height: 100%;
     margin: 0;
@@ -5543,7 +5543,7 @@ textarea.form-control-lg {
 }
 @media (max-width: 1399.98px) {
   .modal-fullscreen-xxl-down {
-    width: 100vw;
+    width: 90vw;
     max-width: none;
     height: 100%;
     margin: 0;

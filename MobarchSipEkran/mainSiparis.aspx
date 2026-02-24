@@ -144,7 +144,7 @@
 
                         <div class="col-md-4">
                             <label class="form-label label-xs text-muted">Açıklama</label>
-                            <asp:TextBox ID="TextBox1" runat="server" CssClass="form-control form-control-sm" />
+                            <asp:TextBox ID="txtAciklama" runat="server" CssClass="form-control form-control-sm" />
                         </div>
 
                     </div>
@@ -198,7 +198,7 @@
                         <div class="card-body">
 
                             <div class="mb-2">
-                                <label class="fw-bold small mb-1 text-muted">Bakiye</label>
+                                <label class="fw-bold small mb-1 text-muted">Açık Bakiye</label>
                                 <asp:Label ID="lblCariBakiye" runat="server"
                                     CssClass="form-control form-control-sm mb-2 bg-light text-end" />
                             </div>
@@ -310,14 +310,7 @@
                                         <asp:BoundField DataField="KdvDahilTutar" HeaderText="KDV Dâhil"
                                             DataFormatString="{0:N2}" ItemStyle-CssClass="number text-center" HeaderStyle-CssClass="text-center" />
 
-                                        <asp:TemplateField HeaderText="">
-                                            <ItemTemplate>
-                                                <asp:LinkButton ID="btnSil" runat="server" Text="Sil"
-                                                    CommandName="Sil"
-                                                    CommandArgument="<%# ((GridViewRow)Container).RowIndex %>"
-                                                    CssClass="btn btn-outline-danger btn-sm" />
-                                            </ItemTemplate>
-                                        </asp:TemplateField>
+                                    
 
                                     </Columns>
 

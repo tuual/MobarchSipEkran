@@ -81,5 +81,31 @@ namespace MobarchSipEkran
                 
             }
         }
+        public static void ExecuteTransaction(Action<SqlCommand> action)
+        {
+            using (var con = new SqlConnection(ResolveConnStr()))
+            {
+                con.Open();
+                using (var transaction = con.BeginTransaction())
+                using (var cmd = con.CreateCommand())
+                {
+                    cmd.Transaction = transaction;
+                    try
+                    {
+                        // Dışarıdan gönderilen işleri burada yapıyoruz
+                        action(cmd);
+
+                        // Her şey yolundaysa kaydet
+                        transaction.Commit();
+                    }
+                    catch (Exception)
+                    {
+                        // Hata varsa her şeyi geri al
+                        transaction.Rollback();
+                        throw; // Hatayı yukarı fırlat ki UI'da gösterebilelim
+                    }
+                }
+            }
+        }
     }
 }
