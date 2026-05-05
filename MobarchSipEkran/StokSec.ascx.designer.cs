@@ -15,15 +15,6 @@ namespace MobarchSipEkran
     {
 
         /// <summary>
-        /// upStok denetimi.
-        /// </summary>
-        /// <remarks>
-        /// Otomatik olarak oluşturulan alan.
-        /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
-        /// </remarks>
-        protected global::System.Web.UI.UpdatePanel upStok;
-
-        /// <summary>
         /// txtAra denetimi.
         /// </summary>
         /// <remarks>
@@ -31,6 +22,24 @@ namespace MobarchSipEkran
         /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtAra;
+
+        /// <summary>
+        /// btnAktar denetimi.
+        /// </summary>
+        /// <remarks>
+        /// Otomatik olarak oluşturulan alan.
+        /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnAktar;
+
+        /// <summary>
+        /// upStok denetimi.
+        /// </summary>
+        /// <remarks>
+        /// Otomatik olarak oluşturulan alan.
+        /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
+        /// </remarks>
+        protected global::System.Web.UI.UpdatePanel upStok;
 
         /// <summary>
         /// gv denetimi.
@@ -49,14 +58,5 @@ namespace MobarchSipEkran
         /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lbKullLimit;
-
-        /// <summary>
-        /// btnAktar denetimi.
-        /// </summary>
-        /// <remarks>
-        /// Otomatik olarak oluşturulan alan.
-        /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnAktar;
     }
 }

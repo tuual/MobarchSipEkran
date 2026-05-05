@@ -37,7 +37,7 @@ namespace MobarchSipEkran
         protected void Page_Load(object sender, EventArgs e)
         {
             txtBelgeNo.Enabled = false;
-            
+
             var conn = Db.ResolveConnStr();
             if (string.IsNullOrEmpty(conn))
             {
@@ -46,7 +46,7 @@ namespace MobarchSipEkran
             }
             if (!IsPostBack)
             {
-               
+
 
                 try
                 {
@@ -54,17 +54,17 @@ namespace MobarchSipEkran
                 }
                 catch (Exception ex)
                 {
-                    alert.AlertMsg("Belge numarası üretilemedi: " + ex.Message, this,"belgeNoUyari");
+                    alert.AlertMsg("Belge numarası üretilemedi: " + ex.Message, this, "belgeNoUyari");
                     txtBelgeNo.Text = "";
                 }
                 txtTarih.Text = DateTime.Now.ToString("yyyy-MM-dd");
                 BindGrid();
                 RecalcTotals();
-              
+
                 CariBilgileri();
 
 
-             
+
             }
         }
 
@@ -98,50 +98,59 @@ namespace MobarchSipEkran
 
         private void BindGrid()
         {
-           
-                if (Session["ConnStr"] == null)
-                {
-                    return;
-                }
-                else
-                {
-                    string sessionID = Session["SID"].ToString();
-                    string sql = @"SELECT
-	                    T.StokKodu
-                       ,S.STOK_ADI AS StokAdi
-                       ,T.Miktar
-                       ,S.SATIS_FIAT1 AS Fiyat
-                       ,(T.Miktar * S.SATIS_FIAT1) AS Tutar
-                       ,(S.KDV_ORANI / 100.0) AS KdvOran
-                       ,CASE S.SatisKdvDahil 
-                        WHEN 1 THEN 
-                            CAST((ISNULL(T.Miktar, 0) * S.SATIS_FIAT1) AS DECIMAL(18,4)) - 
-                            CAST(((ISNULL(T.Miktar, 0) * S.SATIS_FIAT1) / (1.0 + (CAST(ISNULL(S.KDV_ORANI, 0) AS DECIMAL(18,4)) / 100.0))) AS DECIMAL(18,4))
-                        ELSE 
-                            CAST((ISNULL(T.Miktar, 0) * S.SATIS_FIAT1 * CAST(ISNULL(S.KDV_ORANI, 0) AS DECIMAL(18,4)) / 100.0) AS DECIMAL(18,4))
-                    END AS 'KdvTutar'
-                       , CAST((((T.Miktar * S.SATIS_FIAT1) * S.KDV_ORANI) / 100.0) + (T.Miktar * S.SATIS_FIAT1) AS DECIMAL(18,4)) AS 'KdvDahilTutar'
-                    FROM tWebSiparis T
-                    INNER JOIN tStokMaster S
-	                    ON T.StokKodu = S.STOK_KODU
-                    WHERE T.SessionID =  @SID";
-                    DataTable dt = Db.ExecuteDataTable(sql, new SqlParameter("@SID", sessionID));
-                    Session["Stoklar"] = dt;
-                    gvStoklar.DataSource = dt;
-                    gvStoklar.DataBind();
-                RecalcTotals();
-                }
-            }
-           
 
-            
-            
-             
-        
+            if (Session["ConnStr"] == null)
+            {
+                return;
+            }
+            else
+            {
+                string sessionID = Session["SID"].ToString();
+                string sql = @"SELECT T.StokKodu,
+       S.STOK_ADI AS StokAdi,
+       T.BirimMetin,
+       CAST(T.Miktar AS DECIMAL(18, 4)) AS Miktar,
+       CAST(T.BrutFiyat AS DECIMAL(18, 4)) AS Fiyat,
+       CASE S.SatisKdvDahil
+           WHEN 0 THEN
+               CAST(((T.Fiyat * S.KDV_ORANI) / 100.0) + T.Fiyat AS DECIMAL(18, 2))
+           WHEN 1 THEN
+               CAST(T.BrutFiyat * T.Miktar2 AS DECIMAL(18,2))
+       END AS 'Tutar',
+       (S.KDV_ORANI / 100.0) AS KdvOran,
+       CASE S.SatisKdvDahil
+           WHEN 1 THEN
+               CAST((((T.Miktar2 * T.NetFiyat) * S.KDV_ORANI / 100) + (T.Miktar2 * T.BrutFiyat) * (S.KDV_ORANI / 100)) AS DECIMAL(18, 4))
+           WHEN 0 THEN
+               CAST(((((T.Miktar2 * T.NetFiyat) * S.KDV_ORANI) / 100.0) + (T.Miktar2 * T.NetFiyat) * (S.KDV_ORANI / 100)) AS DECIMAL(18, 4))
+       END AS 'KdvTutar',
+       CASE S.SatisKdvDahil
+           WHEN 1 THEN
+               CAST(((T.Miktar2 * T.NetFiyat) * S.KDV_ORANI / 100) + (T.Miktar2 * T.BrutFiyat) AS DECIMAL(18, 4))
+           WHEN 0 THEN
+               CAST((((T.Miktar2 * T.BrutFiyat) * S.KDV_ORANI) / 100.0) + (T.Miktar2 * T.BrutFiyat) AS DECIMAL(18, 4))
+       END AS KdvDahilTutar
+FROM tWebSiparis T
+    INNER JOIN tStokMaster S
+        ON T.StokKodu = S.STOK_KODU
+WHERE T.SessionId = @SID";
+                DataTable dt = Db.ExecuteDataTable(sql, new SqlParameter("@SID", sessionID));
+                Session["Stoklar"] = dt;
+                gvStoklar.DataSource = dt;
+                gvStoklar.DataBind();
+                RecalcTotals();
+            }
+        }
+
+
+
+
+
+
 
         protected void stokSecModal_StokSecildi(object sender, StokSec.StokSecEventArgs e)
         {
-          
+
 
             try
             {
@@ -189,13 +198,13 @@ namespace MobarchSipEkran
                         new SqlParameter("@SID", Session.SessionID));
                     Db.ExecuteNonQuery("Delete from tWebSiparisDetayTemp WHERE StokKodu = @SK and SessionId = @SID", new SqlParameter("@SK", kod),
                         new SqlParameter("@SID", Session.SessionID));
-                    
-                    dt.Rows.Remove(dr);   
+
+                    dt.Rows.Remove(dr);
                 }
 
                 Stoklar = dt;
                 BindGrid();
-                RefreshTotalsPanel();    
+                RefreshTotalsPanel();
             }
         }
         /*  protected void RowMiktar_TextChanged(object sender, EventArgs e)
@@ -234,32 +243,40 @@ namespace MobarchSipEkran
             {
                 txtBrutTutar.Text = "0,00";
                 txtGenelToplam.Text = "0,00";
-                txtIskonto.Text = "0.00";
-                txtAraToplam.Text = "0.00";
-                txtKdvToplam.Text = "0.00";
+                txtIskonto.Text = "0,00";
+                txtAraToplam.Text = "0,00";
+                txtKdvToplam.Text = "0,00";
                 return;
             }
 
-            decimal brutTutar = dt.AsEnumerable().Sum(r => r.Field<decimal>("Tutar"));
-            decimal toplamKdv = dt.AsEnumerable().Sum(r => r.Field<decimal>("KdvTutar"));
+            try
+            {
+                double brutTutar = dt.AsEnumerable().Sum(r => Convert.ToDouble(r["Tutar"]));
+                double toplamKdv = dt.AsEnumerable().Sum(r => Convert.ToDouble(r["KdvTutar"]));
+                double kdvDahilToplam = dt.AsEnumerable().Sum(r => Convert.ToDouble(r["KdvDahilTutar"]));
 
-            decimal kdvDahilToplam = dt.AsEnumerable().Sum(r => r.Field<decimal>("KdvDahilTutar"));
+                double iskonto = Convert.ToDouble(ParseDec(txtIskonto.Text));
 
-            decimal iskonto = ParseDec(txtIskonto.Text);
+                double araToplam = brutTutar - iskonto;
 
-            decimal araToplam = brutTutar - iskonto;
+                double factor = brutTutar > 0 ? araToplam / brutTutar : 1.0;
 
-            decimal factor = brutTutar > 0m ? araToplam / brutTutar : 1m;
-            decimal sonKdv = Math.Round(toplamKdv * factor, 2);
+                double sonKdv = Math.Round(toplamKdv * factor, 2, MidpointRounding.AwayFromZero);
 
-            decimal genelToplam = araToplam + sonKdv;
+                double genelToplam = araToplam + sonKdv;
 
-            txtBrutTutar.Text = brutTutar.ToString("N2", tr);
-            txtAraToplam.Text = araToplam.ToString("N2", tr);
-            txtKdvToplam.Text = sonKdv.ToString("N2", tr);
-            txtGenelToplam.Text = genelToplam.ToString("N2", tr);
+                txtBrutTutar.Text = brutTutar.ToString("N2", tr);
+                txtAraToplam.Text = araToplam.ToString("N2", tr);
+                txtKdvToplam.Text = sonKdv.ToString("N2", tr);
+                txtGenelToplam.Text = genelToplam.ToString("N2", tr);
+
+                CariBilgileri();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Hesaplama Hatası: " + ex.Message);
+            }
         }
-
 
         protected void btnKaydet_Click(object sender, EventArgs e)
         {
@@ -267,7 +284,7 @@ namespace MobarchSipEkran
             List<string> qList = new List<string>();
 
 
-        
+
 
             var sipOnayliDuserQuery = @"SELECT SIPARISONAYLISEVK from tSistemParam";
             var sipOnayliDuser = Db.ExecuteDataTable(sipOnayliDuserQuery);
@@ -280,7 +297,7 @@ namespace MobarchSipEkran
             DateTime dateTime = DateTime.Now;
             string sqlFormattedDate = dateTime.ToString("yyyy-MM-dd HH:mm:ss.fff");
 
-            var zarfID = Guid.NewGuid().ToString().Trim(); 
+            var zarfID = Guid.NewGuid().ToString().Trim();
             var sessionID = Session["SID"].ToString();
             var cariKodu = Session["ALTCARIKOD"] != null ? Session["ALTCARIKOD"].ToString() : "";
 
@@ -301,11 +318,11 @@ namespace MobarchSipEkran
             var aciklama = txtAciklama.Text.Trim();
             var eFaturano = txtBelgeNo.Text.Trim();
 
-           
+
             char onayDurumuVal = (deger == 0) ? 'Y' : 'H';
             char onayTipiVal = 'A';
             string onayTarihiVal = sqlFormattedDate;
-          
+
 
             qList.Add(@"INSERT INTO tSiparis (SUBE_KODU, FTIRSIP, FATIRS_NO, CARI_KODU, TARIH, TIPI, BRUTTUTAR, SAT_ISKT, MFAZ_ISKT, 
                         GEN_ISK1T, GEN_ISK2T, GEN_ISK3T, GEN_ISK1O, GEN_ISK2O, GEN_ISK3O, KDV, FAT_ALTM1, FAT_ALTM2, ODEMEGUNU, ODEMETARIHI,
@@ -317,10 +334,10 @@ namespace MobarchSipEkran
                         FNO, KAPALIFATURA, KASAKODU, ZARFID, E_IRSALIYE, MUHTELIF_MUSTERI, EBELGENOGECERLI, EBELGETASLAKBASILDI, ONAYDURUMU, ONAYKULLANICI, ONAYTARIHI,
                         KONAKLAMA, KONAKLAMAVORAN, KONAKLAMAVTUTAR, KOD1, EXGUMRUKNO, FARKLITESLIMID, IHRACATMI, IHRBRUTKILO, IHRNETKILO, IHRISTISNAKOD, OTV, NAKIT, KREDI, 
                         EXTFL_I, EXTFL_C, TESLIMEDILDI, KAMYONID, REVNO)
-	                    VALUES ('0', '6', '"+belgeNo+@"', '"+cariKodu+@"', '"+tarih+@"', 2, "+brutttutar.ToString().Replace(',','.')+@", 0, 0, 0, 0, 0, 0, 0, 0, "+kdvToplam.ToString().Replace(',', '.') + @", 0, 0, 0, '"+odemeTarihi+@"','"+kdvDahilMi+@"', "+fatKalemAdedi+@", '"+siparisTest+@"',
-	                    0, 100, 0, 0, 0, 0, "+genelToplam.ToString().Replace(',', '.') + @", 0, '100', '0', '0', 0, 0, 0, 0, 0, 0, 0, 0, 0, '"+dYedek10+@"', '"+fiYatTarihi+@"', 0, 0, 0, 0, 'Web Sipariş Portalı', '"+dYedek10+@"'
-	                    ,'', '2000-01-01 00:00:00', 0, 0, '"+onayTipiVal+@"', 0, 1, 0.0000000, 0, '', '"+aciklama+@"', 'SF', '', '', '', '2001-01-01 00:00:00', '', '', '', '', '', '',
-	                    '0', '0', '', '', '', '0', '', '"+zarfID+@"', '0', '0', '0', '0', '"+onayDurumuVal+@"', '', '"+onayTarihiVal+@"', '0', '0', '0', '', '', 
+	                    VALUES ('0', '6', '" + belgeNo + @"', '" + cariKodu + @"', '" + tarih + @"', 2, " + brutttutar.ToString().Replace(',', '.') + @", 0, 0, 0, 0, 0, 0, 0, 0, " + kdvToplam.ToString().Replace(',', '.') + @", 0, 0, 0, '" + odemeTarihi + @"','" + kdvDahilMi + @"', " + fatKalemAdedi + @", '" + siparisTest + @"',
+	                    0, 100, 0, 0, 0, 0, " + genelToplam.ToString().Replace(',', '.') + @", 0, '100', '0', '0', 0, 0, 0, 0, 0, 0, 0, 0, 0, '" + dYedek10 + @"', '" + fiYatTarihi + @"', 0, 0, 0, 0, 'Web Sipariş Portalı', '" + dYedek10 + @"'
+	                    ,'', '2000-01-01 00:00:00', 0, 0, '" + onayTipiVal + @"', 0, 1, 0.0000000, 0, '', '" + aciklama + @"', 'SF', '', '', '', '2001-01-01 00:00:00', '', '', '', '', '', '',
+	                    '0', '0', '', '', '', '0', '', '" + zarfID + @"', '0', '0', '0', '0', '" + onayDurumuVal + @"', '', '" + onayTarihiVal + @"', '0', '0', '0', '', '', 
 	                    '0', '0', '0', '0', '', '0', '0', '0', '', '', 0, 0, 0)");
 
             qList.Add(@"
@@ -336,12 +353,12 @@ IHRKABNO, IHRKABADET, KAR_MALIYET, KAR_BIRIM, KAR_TUTAR, KAR_ORAN, KAR_TARIH, KA
 IND_DEG_MALIYET, SIPKAPATILDI, DUZELTMETARIHI,
 SOZID, ORJ_ISLEM_MIK, TEVKIFATID)
 SELECT tws.StokKodu, -- STOK_KODU - nvarchar(35)
-'"+belgeNo+@"', -- FISNO - nvarchar(15)
+'" + belgeNo + @"', -- FISNO - nvarchar(15)
     tws.Miktar2, -- STHAR_GCMIK - float
     tws.Miktar, -- STHAR_GCMIK2 - float
-    1.00000000000000, -- CEVRIM - decimal(28, 14)
+    tws.Cevrim , -- CEVRIM - decimal(28, 14)
     'C', -- STHAR_GCKOD - char(1)
-    '"+tarih+ @"', -- STHAR_TARIH - datetime
+    '" + tarih + @"', -- STHAR_TARIH - datetime
     tws.NetFiyat, -- STHAR_NF - float
     tws.BrutFiyat, -- STHAR_BF - float
     0, -- STHAR_IAF - float
@@ -366,7 +383,7 @@ SELECT tws.StokKodu, -- STOK_KODU - nvarchar(35)
     NULL, -- STHAR_KOD1 - char(1)
     NULL, -- STHAR_KOD2 - char(1)
     NULL, -- STHAR_SIPNUM - nvarchar(15)
-    '"+cariKodu+@"', -- STHAR_CARIKOD - nvarchar(400)
+    '" + cariKodu + @"', -- STHAR_CARIKOD - nvarchar(400)
     NULL, -- STHAR_SIP_TURU - char(1)
     100, -- PLASIYER_KODU - nvarchar(25)
     NULL, -- EKALAN_NEDEN - char(1)
@@ -386,8 +403,8 @@ SELECT tws.StokKodu, -- STOK_KODU - nvarchar(35)
     NULL, -- KOSULKODU - varchar(8)
     0, -- ECZA_FAT_TIP - int
     GETDATE(), -- STHAR_TESTAR - datetime
-    1, -- OLCUBR - int
-    '"+tarih+@"', -- VADE_TARIHI - datetime
+    tws.Birim, -- OLCUBR - int
+    '" + tarih + @"', -- VADE_TARIHI - datetime
     NULL, -- LISTE_NO - varchar(8)
     0, -- BAGLANTI_NO - int
     0, -- SUBE_KODU - int
@@ -429,7 +446,7 @@ SELECT tws.StokKodu, -- STOK_KODU - nvarchar(35)
     '', -- STHAR_DOVAD - nvarchar(10)
     '', -- SKTACIK - nvarchar(25)
     NULL, -- SATIRACIKLAMA - nvarchar(150)
-    '"+zarfID+@"', -- MAS_ZARFID - uniqueidentifier
+    '" + zarfID + @"', -- MAS_ZARFID - uniqueidentifier
     NULL, -- PALET_ID - uniqueidentifier
     0.00000, -- GSTHAR_BF - decimal(18, 5)
     0.00000, -- GSTHAR_NF - decimal(18, 5)
@@ -466,9 +483,10 @@ SELECT tws.StokKodu, -- STOK_KODU - nvarchar(35)
     0 -- TEVKIFATID - int
 FROM dbo.tWebSiparis AS tws 
 Left Join tStokMaster ST ON ST.STOK_KODU = tws.StokKodu 
-WHERE tws.SessionId = '"+sessionID+@"'");
+WHERE tws.SessionId = '" + sessionID + @"'");
 
             qList.Add(@"DELETE FROM tWebSiparisDetayTemp WHERE SessionId = '" + sessionID + @"'");
+            qList.Add(@"DELETE FROM tWebSiparis WHERE SessionId = '" + sessionID + @"'");
 
             try
             {
@@ -519,9 +537,9 @@ WHERE tws.SessionId = '"+sessionID+@"'");
                          cmd.Parameters.AddWithValue("@SID", sessionID);
                          cmd.ExecuteNonQuery();
                         */
-              
-                
-                BildirimHelper.MesajGoster(this, "Sipariş Başarıyla Oluşturuldu.", false);  
+
+
+                BildirimHelper.MesajGoster(this, "Sipariş Başarıyla Oluşturuldu.", false);
 
                 Session["Stoklar"] = null;
                 textleriSil();
@@ -582,16 +600,16 @@ WHERE tws.SessionId = '"+sessionID+@"'");
 
             if (kalanLimit < 0)
             {
-                lblKalanLimit.ForeColor = Color.Red;
+                lblKalanLimit.ForeColor = ColorTranslator.FromHtml("#D64550");
             }
             else
             {
-                lblKalanLimit.ForeColor = Color.Black;
+                lblKalanLimit.ForeColor = ColorTranslator.FromHtml("#2F855A");
             }
         }
 
-             
-        
+
+
         private string GetNextFatirsNoFromSeri()
         {
             var seriRow = Db.ExecuteRow(
@@ -618,7 +636,7 @@ WHERE tws.SessionId = '"+sessionID+@"'");
                 ? null
                 : Convert.ToString(row["SONNO"]);
 
-            int totalLen = 15;                       
+            int totalLen = 15;
             int numericLen = totalLen - prefix.Length;
 
             if (numericLen <= 0)
@@ -638,7 +656,7 @@ WHERE tws.SessionId = '"+sessionID+@"'");
                 throw new Exception("FATIRS_NO sayısal olmayan karakter içeriyor.");
 
             long n = long.Parse(numericPart);
-            n++; 
+            n++;
 
             string nextNumeric = n.ToString().PadLeft(numericPart.Length, '0');
 
@@ -650,14 +668,14 @@ WHERE tws.SessionId = '"+sessionID+@"'");
             txtBelgeNo.Text = GetNextFatirsNoFromSeri();
             txtTarih.Text = DateTime.Now.ToString("yyyy-MM-dd");
             txtIskonto.Text = "0";
-                txtBrutTutar.Text = "0,00";
-                txtAraToplam.Text = "0,00";
-               txtGenelToplam.Text = "0,00";
-                txtKdvToplam.Text = "0,00"; 
+            txtBrutTutar.Text = "0,00";
+            txtAraToplam.Text = "0,00";
+            txtGenelToplam.Text = "0,00";
+            txtKdvToplam.Text = "0,00";
             txtAciklama.Text = "";
             CariBilgileri();
         }
-       
+
 
 
     }

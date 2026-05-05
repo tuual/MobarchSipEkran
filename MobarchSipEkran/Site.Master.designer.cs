@@ -33,6 +33,15 @@ namespace MobarchSipEkran
         protected global::System.Web.UI.HtmlControls.HtmlGenericControl NavBar;
 
         /// <summary>
+        /// lblFirma denetimi.
+        /// </summary>
+        /// <remarks>
+        /// Otomatik olarak oluşturulan alan.
+        /// Değiştirmek için, alan bildirimini tasarımcı dosyasından arka plan kod dosyasına taşıyın.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblFirma;
+
+        /// <summary>
         /// MainContent denetimi.
         /// </summary>
         /// <remarks>

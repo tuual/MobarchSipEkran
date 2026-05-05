@@ -33,7 +33,7 @@ namespace MobarchSipEkran
         protected override void OnInit(EventArgs e)
         {
             base.OnInit(e);
-          
+
         }
 
         protected void Page_Load(object sender, EventArgs e)
@@ -50,17 +50,17 @@ namespace MobarchSipEkran
         private void Bind(string term)
         {
             var carikod = Session["ALTCARIKOD"].ToString();
-            
-             cariSql = @"select VARSAYILANKOSUL from tCariMaster WHERE CARI_KOD = @CAKOD";
+
+            cariSql = @"select VARSAYILANKOSUL from tCariMaster WHERE CARI_KOD = @CAKOD";
             var dtCari = Db.ExecuteDataTable(cariSql, new SqlParameter("@CAKOD", carikod));
-             cariRow = dtCari.Rows[0];
+            cariRow = dtCari.Rows[0];
             var varsayilanKosul = cariRow["VARSAYILANKOSUL"];
             var iskontoQuery = "exec [sp_KalemIskontoBul] @STOKKODU,@CAKOD,@TARIH,@VADETIP,100,0";
             var iskontoHesaplama = "";
 
             string sql = @"SELECT
-	                        S.STOK_KODU
-                           ,S.STOK_ADI, 
+                            S.STOK_KODU,
+                           S.STOK_ADI, 
 	                        ISNULL(T.Miktar, 0) AS KayitliMiktar
                            ,CASE S.SatisKdvDahil
 		                        WHEN 1 THEN 'Dahil'
@@ -95,13 +95,13 @@ namespace MobarchSipEkran
                 new SqlParameter("@T", term ?? string.Empty),
                 new SqlParameter("@KOD", (term ?? string.Empty) + "%"),
                 new SqlParameter("@AD", "%" + (term ?? string.Empty) + "%"));
-            
+
             gv.DataSource = dt;
             gv.DataBind();
-            
+
         }
 
-     
+
 
         protected void gv_RowDataBound(object sender, GridViewRowEventArgs e)
         {
@@ -113,7 +113,7 @@ namespace MobarchSipEkran
                     ScriptManager.GetCurrent(Page).RegisterPostBackControl(btn);
                 }
                 var dataRow = e.Row.DataItem as DataRowView;
-                
+
                 DropDownList ddl = (DropDownList)e.Row.FindControl("ddlBirimler");
 
                 if (ddl != null)
@@ -121,13 +121,13 @@ namespace MobarchSipEkran
                     ddl.Items.Clear();
                     ddl.Items.Add(new ListItem(BirimIsimlendirme.BirimDuzeltme(dataRow["OLCU_BR1"].ToString()), "1/1"));
 
-                    if (!string.IsNullOrEmpty(dataRow["OLCU_BR2"].ToString()))                   
+                    if (!string.IsNullOrEmpty(dataRow["OLCU_BR2"].ToString()))
                     {
                         string katsayi = dataRow["PAY_1"].ToString() + "/" + dataRow["PAYDA_1"].ToString();
                         ddl.Items.Add(new ListItem(BirimIsimlendirme.BirimDuzeltme(dataRow["OLCU_BR2"].ToString()), katsayi));
                     }
 
-                    if (!string.IsNullOrEmpty(dataRow["OLCU_BR3"].ToString())) 
+                    if (!string.IsNullOrEmpty(dataRow["OLCU_BR3"].ToString()))
                     {
                         string katsayi = dataRow["PAY2"].ToString() + "/" + dataRow["PAYDA2"].ToString();
                         ddl.Items.Add(new ListItem(BirimIsimlendirme.BirimDuzeltme(dataRow["OLCU_BR3"].ToString()), katsayi));
@@ -140,7 +140,7 @@ namespace MobarchSipEkran
                         secilecekItem.Selected = true;
                     }
                 }
-                    decimal kayitliMiktar = Convert.ToDecimal(dataRow["KayitliMiktar"]);
+                decimal kayitliMiktar = Convert.ToDecimal(dataRow["KayitliMiktar"]);
                 TextBox txt = e.Row.FindControl("txtMiktar") as TextBox;
                 if (txt != null)
                 {
@@ -162,12 +162,12 @@ namespace MobarchSipEkran
                 DropDownList ddlBirimler = row.FindControl("ddlBirimler") as DropDownList;
                 var secilenBirim = ddlBirimler.SelectedIndex;
                 string[] katsayi = ddlBirimler.SelectedValue.Split('/');
-                decimal pay = Convert.ToDecimal(katsayi[0]);
-                decimal payda = Convert.ToDecimal(katsayi[1]);
-                var secilenBirimMetin = ddlBirimler.SelectedItem.Text.ToString();
+                float pay = float.Parse(katsayi[0]);
+                float payda = float.Parse(katsayi[1]);
+                var secilenBirimMetin = BirimIsimlendirme.BirimDuzeltme(ddlBirimler.SelectedItem.Text.ToString());
                 TextBox txtMiktar = (TextBox)row.FindControl("txtMiktar");
-                decimal miktar = 0;
-                decimal.TryParse(txtMiktar.Text, out miktar);
+                double miktar = 0;
+                double.TryParse(txtMiktar.Text, out miktar);
                 if (onStokSecildi != null)
                 {
                     onStokSecildi(this, new StokSecEventArgs
@@ -177,19 +177,19 @@ namespace MobarchSipEkran
                     });
                 }
 
-                if (miktar > 0 )
+                if (miktar > 0)
                 {
-                  
-                  TempKaydet(stokKodu, miktar, false,secilenBirim,pay,payda,secilenBirimMetin);
-                        txtMiktar.CssClass = "form-control form-control-sm is-valid";
 
-                    
+                    TempKaydet(stokKodu, miktar, false, secilenBirim, pay, payda, secilenBirimMetin);
+                    txtMiktar.CssClass = "form-control form-control-sm is-valid";
+
+
 
                 }
-               
+
             }
 
-            if (e.CommandName=="Sil")
+            if (e.CommandName == "Sil")
             {
                 int rowIndex = Convert.ToInt32(e.CommandArgument);
                 GridViewRow row = gv.Rows[rowIndex];
@@ -201,23 +201,25 @@ namespace MobarchSipEkran
 
         }
 
-        private void TempKaydet(string stokKodu, decimal miktar,bool T,int birim , decimal pay, decimal payda,string secilenBirimMetin)
+        private void TempKaydet(string stokKodu, double miktar, bool T, int birim, float pay, float payda, string secilenBirimMetin)
         {
             string stokFiyat = "SELECT SATIS_FIAT1,KDV_ORANI,SatisKdvDahil from tStokMaster WHERE STOK_KODU = @STOK";
-           var kayit = Db.ExecuteDataTable(stokFiyat, new SqlParameter("@STOK", stokKodu));
+            var kayit = Db.ExecuteDataTable(stokFiyat, new SqlParameter("@STOK", stokKodu));
             if (kayit.Rows.Count > 0)
             {
                 DataRow datarow = kayit.Rows[0];
-                decimal hamFiyat = Convert.ToDecimal(datarow["SATIS_FIAT1"]); 
-                decimal kdvOran = Convert.ToDecimal(datarow["KDV_ORANI"]);
+                double hamFiyat = Convert.ToDouble(datarow["SATIS_FIAT1"]);
+                double kdvOran = Convert.ToDouble(datarow["KDV_ORANI"]);
                 bool isKdvDahil = Convert.ToBoolean(datarow["SatisKdvDahil"]);
-                decimal brutfiyat = 0;
-                decimal netFiyat = 0;
-
+                double brutfiyat = 0;
+                double netFiyat = 0;
+               
                 if (isKdvDahil)
                 {
-                    decimal birimFiyat = Convert.ToDecimal(hamFiyat);
-                     brutfiyat = Convert.ToDecimal(birimFiyat / (1 + (kdvOran / 100)));
+                    
+                    double birimFiyat = Convert.ToDouble(hamFiyat);
+                    double toplam = birimFiyat * miktar;
+                    brutfiyat = Convert.ToDouble(birimFiyat / (1 + (kdvOran / 100)));
                 }
                 else
                 {
@@ -230,7 +232,7 @@ namespace MobarchSipEkran
                 }
                 else
                 {
-                     netFiyat = hamFiyat + (hamFiyat * (kdvOran / 100));
+                    netFiyat = hamFiyat + (hamFiyat * (kdvOran / 100));
                 }
                 if (hamFiyat == 0)
                 {
@@ -239,20 +241,20 @@ namespace MobarchSipEkran
                     T = false;
                     return;
                 }
-                decimal hesaplanmisBirimFiyat = (hamFiyat * payda) / pay;
-                decimal anaBirimMiktar = miktar/ (pay / payda) ;
+                double hesaplanmisBirimFiyat = (hamFiyat * payda) / pay;
+                double anaBirimMiktar = Convert.ToDouble( miktar / Convert.ToDouble(pay / payda));
 
                 var sonuc = SiparisHesaplayici.Hesapla(hesaplanmisBirimFiyat, miktar, kdvOran, isKdvDahil);
-                    string sessionID = Session["SID"].ToString();
-                
-                    
-                   string sqlStokKontrol = @"SELECT Miktar,Fiyat FROM tWebSiparisDetayTemp WHERE SessionID = @SID AND StokKodu = @SK";
+                string sessionID = Session["SID"].ToString();
+
+
+                string sqlStokKontrol = @"SELECT Miktar,Fiyat FROM tWebSiparisDetayTemp WHERE SessionID = @SID AND StokKodu = @SK";
                 var kontrol = Db.ExecuteDataTable(sqlStokKontrol, new SqlParameter("@SID", sessionID), new SqlParameter("@SK", stokKodu));
-                if (kontrol.Rows.Count > 0 )
+                if (kontrol.Rows.Count > 0)
                 {
-                  
+
                     decimal eskiFiyat = Convert.ToDecimal(kontrol.Rows[0]["Fiyat"]);
-                    decimal eskiMiktar = Convert.ToDecimal(kontrol.Rows[0]["Miktar"]); 
+                    decimal eskiMiktar = Convert.ToDecimal(kontrol.Rows[0]["Miktar"]);
                     decimal eskiSatirToplam = eskiFiyat * eskiMiktar;
                     genelToplamlar.sipGenelToplam -= eskiSatirToplam;
 
@@ -264,34 +266,35 @@ namespace MobarchSipEkran
         END
         ELSE
         BEGIN
-            INSERT INTO tWebSiparisDetayTemp(SessionID, StokKodu, Miktar, KayitTarihi, Fiyat, Birim,Miktar2,BrutFiyat,NetFiyat,BirimMetin)
-            VALUES(@SID, @SK, @M, GETDATE(), @FIYAT, @BR,@ANABIRIMMIKTAR,@BRUTFIYAT,@NETFIYAT,@BIRIMMETIN)
+            INSERT INTO tWebSiparisDetayTemp(SessionID, StokKodu, Miktar, KayitTarihi, Fiyat, Birim,Miktar2,BrutFiyat,NetFiyat,BirimMetin,Cevrim)
+            VALUES(@SID, @SK, @M, GETDATE(), @FIYAT, @BR,@ANABIRIMMIKTAR,@BRUTFIYAT,@NETFIYAT,@BIRIMMETIN,@CEVRIM)
         END";
 
                 genelToplamlar.sipGenelToplam += Convert.ToDecimal(sonuc.SatirToplam); // Satir toplam belirticez
-                    Db.ExecuteNonQuery(sql, new SqlParameter("@SID", sessionID),
-                       new SqlParameter("@SK", stokKodu),
-                       new SqlParameter("@M", miktar),
-                       new SqlParameter("@BR", birim),
-                       new SqlParameter("@BRUTFIYAT",brutfiyat),
-                       new SqlParameter("@NETFIYAT",netFiyat),
-                       new SqlParameter("@BIRIMMETIN", secilenBirimMetin),
-                       new SqlParameter("@ANABIRIMMIKTAR", anaBirimMiktar),
-                       new SqlParameter("@FIYAT", sonuc.BirimFiyat));
-                    BildirimHelper.MesajGoster(upStok, "Ürün Eklendi", false);
-                    T = true;
-                    lbKullLimit.Text = kullanilabilirLimit().ToString("N2");
+                Db.ExecuteNonQuery(sql, new SqlParameter("@SID", sessionID),
+                   new SqlParameter("@SK", stokKodu),
+                   new SqlParameter("@M", miktar),
+                   new SqlParameter("@BR", birim),
+                   new SqlParameter("@BRUTFIYAT", brutfiyat),
+                   new SqlParameter("@NETFIYAT", netFiyat),
+                   new SqlParameter("@BIRIMMETIN", secilenBirimMetin),
+                   new SqlParameter("@ANABIRIMMIKTAR", anaBirimMiktar),
+                   new SqlParameter("@CEVRIM", Convert.ToDouble(pay / payda)),
+                   new SqlParameter("@FIYAT", sonuc.BirimFiyat));
+                BildirimHelper.MesajGoster(upStok, "Ürün Eklendi", false);
+                T = true;
+                lbKullLimit.Text = kullanilabilirLimit().ToString("N2");
 
 
 
 
 
             }
-        
-           
-            }
-           
-        
+
+
+        }
+
+
 
         private void TempSil(string stokKodu)
         {
@@ -299,16 +302,16 @@ namespace MobarchSipEkran
             string sessionID = Session["SID"].ToString();
 
             var sorgu = @"Select * from tWebSiparisDetayTemp WHERE SessionId = @SID AND StokKodu = @SK";
-            var kayit = Db.ExecuteDataTable(sorgu,new SqlParameter("@SID", sessionID),
-                new SqlParameter("@SK",stokKodu));
-            
+            var kayit = Db.ExecuteDataTable(sorgu, new SqlParameter("@SID", sessionID),
+                new SqlParameter("@SK", stokKodu));
+
             if (kayit.Rows.Count > 0)
             {
                 var fiyatSorgu = "SELECT Fiyat from tWebSiparisDetayTemp WHERE StokKodu = @STOK";
                 var fiyatSorguDb = Db.ExecuteDataTable(fiyatSorgu, new SqlParameter("@STOK", stokKodu));
                 DataRow data = fiyatSorguDb.Rows[0];
                 decimal fiyat = Convert.ToDecimal(data["Fiyat"]);
-                
+
                 genelToplamlar.sipGenelToplam -= (fiyat * Convert.ToDecimal(kayit.Rows[0]["Miktar"]));
 
                 string sql = @"Delete FROM tWebSiparisDetayTemp WHERE SessionId = @SID AND StokKodu = @SK";
@@ -331,7 +334,7 @@ namespace MobarchSipEkran
                 BildirimHelper.MesajGoster(upStok, "Ürün bulunamadı", true);
             }
 
-        
+
 
         }
 
@@ -360,10 +363,10 @@ namespace MobarchSipEkran
                 onStokSecildi(this, new StokSecEventArgs());
                 var sql = @"delete from tWebSiparis WHERE SessionId = @SID;
                     INSERT INTO tWebSiparis SELECT * FROM tWebSiparisDetayTemp WHERE SessionId = @SID";
-                Db.ExecuteNonQuery(sql, new SqlParameter("@SID", Session["SID"])); 
-                
+                Db.ExecuteNonQuery(sql, new SqlParameter("@SID", Session["SID"]));
+
             }
-            ScriptManager.RegisterStartupScript(this.Page, GetType(), "refresh", "kayitBasarili()",true);
+            ScriptManager.RegisterStartupScript(this.Page, GetType(), "refresh", "kayitBasarili()", true);
             ScriptManager.RegisterStartupScript(this.Page, GetType(), "closeModal", "$('#stokModal').modal('hide');", true);
         }
         public decimal kullanilabilirLimit()
@@ -392,4 +395,4 @@ namespace MobarchSipEkran
             return limit;
         }
     }
-    }
+}

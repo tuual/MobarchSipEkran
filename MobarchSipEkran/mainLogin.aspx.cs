@@ -11,20 +11,20 @@ using MobarchSipEkran.Class;
 
 namespace MobarchSipEkran
 {
-	public partial class mainLogin : System.Web.UI.Page
-	{
+    public partial class mainLogin : System.Web.UI.Page
+    {
         Alert alert = new Alert();
         protected void Page_Load(object sender, EventArgs e)
-		{
-			if (!IsPostBack)
-			{
+        {
+            if (!IsPostBack)
+            {
                 Session.Remove("ConnStr");
                 Session.Remove("SISTEMCARIKOD");
                 Session.Remove("ALTCARIKOD");
                 Session.Remove("VKN");
                 Session.Remove("Kadi");
             }
-		}
+        }
 
 
         protected void btnGiris_Click(object sender, EventArgs e)
@@ -35,7 +35,7 @@ namespace MobarchSipEkran
 
             if (string.IsNullOrWhiteSpace(vkn) || string.IsNullOrWhiteSpace(kadi) || string.IsNullOrWhiteSpace(sifre))
             {
-                alert.AlertMsg("Lütfen tüm alanları doldurunuz.",this,"loginUyari");
+                alert.AlertMsg("Lütfen tüm alanları doldurunuz.", this, "loginUyari");
                 return;
             }
 
@@ -50,17 +50,17 @@ namespace MobarchSipEkran
 
                 if (userRow == null)
                 {
-                    alert.AlertMsg("Bilgiler hatalı. Lütfen tekrar kontrol edin.",this,"loginUyari1");
+                    alert.AlertMsg("Bilgiler hatalı. Lütfen tekrar kontrol edin.", this, "loginUyari1");
                     return;
                 }
 
 
-                string sistemCariKod = Convert.ToString(userRow["SISTEMCARIKOD"]); 
+                string sistemCariKod = Convert.ToString(userRow["SISTEMCARIKOD"]);
                 string altcarikod = Convert.ToString(userRow["ALTCARIKOD"]);
 
                 if (string.IsNullOrWhiteSpace(sistemCariKod) || string.IsNullOrWhiteSpace(altcarikod))
                 {
-                    alert.AlertMsg("Kullanıcı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.",this, "loginUyari2");
+                    alert.AlertMsg("Kullanıcı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.", this, "loginUyari2");
                     return;
                 }
 
@@ -71,7 +71,7 @@ namespace MobarchSipEkran
 
                 if (connRow == null)
                 {
-                    alert.AlertMsg("Sistem bağlantı bilgisi bulunamadı. (tWebBilgiler)",this, "loginUyari3");
+                    alert.AlertMsg("Sistem bağlantı bilgisi bulunamadı. (tWebBilgiler)", this, "loginUyari3");
                     return;
                 }
 
@@ -82,13 +82,13 @@ namespace MobarchSipEkran
 
                 if (string.IsNullOrWhiteSpace(ds) || string.IsNullOrWhiteSpace(db))
                 {
-                    alert.AlertMsg("Sistem bağlantı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.",this, "loginUyari4");
+                    alert.AlertMsg("Sistem bağlantı bilgileri eksik. Lütfen yöneticinizle iletişime geçin.", this, "loginUyari4");
                     return;
                 }
 
                 string customerConnStr = BuildSqlConnString(ds, db, uid, pwd);
 
-                using(var con = new SqlConnection(customerConnStr))
+                using (var con = new SqlConnection(customerConnStr))
                 {
                     con.Open();
                 }
@@ -106,7 +106,7 @@ namespace MobarchSipEkran
             }
             catch (Exception ex)
             {
-                alert.AlertMsg("Giriş Sırasında Bir hata ile karşılaşıldı " + '\n' + ex.ToString(),this, "loginUyari6");
+                alert.AlertMsg("Giriş Sırasında Bir hata ile karşılaşıldı " + '\n' + ex.ToString(), this, "loginUyari6");
             }
 
             // ClientScript.RegisterStartupScript(this.GetType(), "alert", "alert('Giriş Başarılı!')",true);
@@ -130,7 +130,7 @@ namespace MobarchSipEkran
             return sb.ToString();
         }
 
-        private void ClassDoldurma(string connstr , string  sistemcarikod, string altcarikod , string vkn,string kadi)
+        private void ClassDoldurma(string connstr, string sistemcarikod, string altcarikod, string vkn, string kadi)
         {
             //DbHelper.Sessions session = new DbHelper.Sessions();
             //session.Connstr = "Data Source=DESKTOP-ABCD123;Initial Catalog=MyDatabase;
@@ -139,13 +139,13 @@ namespace MobarchSipEkran
             sessionobj.Connstr = connstr;
             sessionobj.Sistemcarikod = sistemcarikod;
             sessionobj.Altcarikod = altcarikod;
-            sessionobj.Vkn = vkn;  
+            sessionobj.Vkn = vkn;
             sessionobj.Kadi = kadi;
 
 
             Session["MobarchUser"] = sessionobj;
         }
 
-        
+
     }
 }

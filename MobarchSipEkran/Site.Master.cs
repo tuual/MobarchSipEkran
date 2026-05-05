@@ -10,6 +10,7 @@ namespace MobarchSipEkran
 {
     public partial class SiteMaster : MasterPage
     {
+        string syscarkod;
         protected void Page_Load(object sender, EventArgs e)
         {
             string path = Request.Url.AbsolutePath.ToLower();
@@ -18,18 +19,32 @@ namespace MobarchSipEkran
                 if (NavBar != null)
                     NavBar.Visible = false;
 
-             
+
             }
 
-          
 
 
 
-            var syscarkod = Session?["SISTEMCARIKOD"] as string;
+
+            syscarkod = Session?["SISTEMCARIKOD"] as string;
             if (string.IsNullOrWhiteSpace(syscarkod))
             {
                 Response.Redirect("mainLogin.aspx");
             }
+            else
+            {
+                anaCariUnvanBulma();
+            }
+
+
+        }
+        private void anaCariUnvanBulma()
+        {
+            var subeadi = Db.ExecuteDataTable("SELECT SUBE_ISMI FROM tSubeMaster");
+            if (subeadi.Rows.Count > 0)
+            {
+                lblFirma.Text= subeadi.Rows[0][0].ToString();
+            }
         }
     }
-    }
+}

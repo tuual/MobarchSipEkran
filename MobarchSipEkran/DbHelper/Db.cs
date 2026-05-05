@@ -11,8 +11,8 @@ using MobarchSipEkran.Class;
 
 namespace MobarchSipEkran
 {
-	public static class Db
-	{
+    public static class Db
+    {
         public static string ResolveConnStr()
         {
             var ctx = System.Web.HttpContext.Current;
@@ -20,12 +20,12 @@ namespace MobarchSipEkran
 
             if (!string.IsNullOrWhiteSpace(fromSession))
                 return fromSession;
-          
-            
-                return ConfigurationManager.ConnectionStrings["DefaultConn"]?.ConnectionString
-                     ?? throw new InvalidOperationException("Bağlantı dizesi bulunamadı.");
-            
-            
+
+
+            return ConfigurationManager.ConnectionStrings["DefaultConn"]?.ConnectionString
+                 ?? throw new InvalidOperationException("Bağlantı dizesi bulunamadı.");
+
+
         }
 
         public static object ExecuteScalar(string sql, params SqlParameter[] parameters)
@@ -72,13 +72,13 @@ namespace MobarchSipEkran
             using (var con = new SqlConnection(ResolveConnStr()))
             using (var da = new SqlDataAdapter(sql, con))
             {
-                if(prms != null && prms.Length > 0)
-                
+                if (prms != null && prms.Length > 0)
+
                     da.SelectCommand.Parameters.AddRange(prms);
                 var dt = new DataTable();
                 da.Fill(dt);
                 return dt.Rows.Count > 0 ? dt.Rows[0] : null;
-                
+
             }
         }
         public static void ExecuteTransaction(Action<SqlCommand> action)
